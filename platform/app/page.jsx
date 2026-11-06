@@ -25,7 +25,7 @@ export default function Home(){
  const [search,setSearch]=useState('');
  const [start,setStart]=useState('');
  const [end,setEnd]=useState('');
- const [limit,setLimit]=useState(500);
+ const [limit,setLimit]=useState(100000);
  const [loading,setLoading]=useState(true);
  const [user,setUser]=useState(null);
  const [panel,setPanel]=useState('');
@@ -39,6 +39,7 @@ export default function Home(){
  const showError=(s)=>{setError(s);setMessage('');};
  const isDemo=mode!=='live';
  const cities=useMemo(()=>['All cities',...new Set(items.map(x=>x.city).filter(Boolean))],[items]);
+ const maxPrice=useMemo(()=>Math.max(1000,Math.ceil(Math.max(0,...items.map(x=>Number(x.price_per_hour)||0))/50)*50),[items]);
 
  async function load(controller){
    setLoading(true);
@@ -134,11 +135,11 @@ export default function Home(){
        <label><Label>END DATE & TIME</Label><input type="datetime-local" value={end} onChange={e=>setEnd(e.target.value)}/></label>
        <label className="keywordField"><Label>WHAT ARE YOU LOOKING FOR?</Label><input type="search" placeholder="Search services, amenities..." value={search} onChange={e=>setSearch(e.target.value)}/></label>
       </div>
-      <div className="resultHeader"><div><span className="eyebrow darkEyebrow">CURATED MOBILITY</span><h3>{kind==='all'?'Explore our services':TABS.find(x=>x.id===kind)?.name} <span className="resultsCount">{found.length}</span></h3></div><div className="priceField"><label htmlFor="maxPrice">MAX PRICE / HOUR <strong>{INR(limit)}</strong></label><input id="maxPrice" type="range" min="50" max="1000" step="50" value={limit} onChange={e=>setLimit(Number(e.target.value))}/></div></div>
+      <div className="resultHeader"><div><span className="eyebrow darkEyebrow">CURATED MOBILITY</span><h3>{kind==='all'?'Explore our services':TABS.find(x=>x.id===kind)?.name} <span className="resultsCount">{found.length}</span></h3></div><div className="priceField"><label htmlFor="maxPrice">MAX PRICE / HOUR <strong>{INR(Math.min(limit,maxPrice))}</strong></label><input id="maxPrice" type="range" min="0" max={maxPrice} step="50" value={Math.min(limit,maxPrice)} onChange={e=>setLimit(Number(e.target.value))}/></div></div>
       {isDemo&&<div className="notice"><span className="noticeMark">i</span><div><strong>Preview inventory</strong><p>These six listings are illustrative, not verified availability or actual merchant offers. Bookings and sign-ups remain disabled until a real database and operator inventory are connected.</p></div></div>}
       {!!error&&<div className="feedback error" role="alert"><span>!</span>{error}<button onClick={()=>setError('')} aria-label="Dismiss error">×</button></div>}
       {!!message&&<div className="feedback success" role="status"><span>✓</span>{message}<button onClick={()=>setMessage('')} aria-label="Dismiss notification">×</button></div>}
-      {loading?<div className="emptyState">Loading services…</div>:found.length===0?<div className="emptyState"><strong>No matching listings</strong><p>Try another city, service type or price range.</p><button className="outlineButton" onClick={()=>{setKind('all');setCity('All cities');setSearch('');setLimit(1000)}}>Reset filters</button></div>:
+      {loading?<div className="emptyState">Loading services…</div>:found.length===0?<div className="emptyState"><strong>No matching listings</strong><p>Try another city, service type or price range.</p><button className="outlineButton" onClick={()=>{setKind('all');setCity('All cities');setSearch('');setLimit(100000)}}>Reset filters</button></div>:
       <div className="cardGrid">{found.map((item,i)=><article className="listingCard" key={item.id}><div className={'listingVisual '+gradients[item.kind]}><span className="listingNumber">TV / 0{i+1}</span><div className="listingGlyph"><Icon name={item.kind}/></div><span className="listingCategory">{item.kind==='vehicle'?'VEHICLE RENTAL':item.kind==='parking'?'SMART PARKING':'EV CHARGING'}</span></div><div className="listingBody"><div className="itemLocation">⌖ {item.area}, {item.city}</div><h4>{item.title}</h4><p>{item.subtitle}</p><div className="featureList">{(item.features||[]).slice(0,3).map(f=><span key={f}>{f}</span>)}</div><div className="listingFoot"><div className="rate"><strong>{INR(item.price_per_hour)}</strong><small>/ hour</small></div><button className={'bookButton '+(item.demo||isDemo||item.available===false?'disabledBook':'')} onClick={()=>reserve(item)} disabled={working||item.available===false} aria-label={'Request booking for '+item.title}>{item.demo||isDemo?'Preview listing':item.available===false?'Unavailable':'Request booking'} <span>↗</span></button></div></div></article>)}</div>}
      </section>
      <section className="servicesShowcase" id="why-testveh"><div className="container"><div className="eyebrow">02 / ALL IN ONE PLACE</div><div className="showcaseTitle"><h2>One city.<br/><em>Endless possibilities.</em></h2><p>Built to bring the essential parts of urban mobility together without the clutter.</p></div><div className="featureGrid"><div><span className="featureSymbol">↗</span><h3>Freedom to move</h3><p>Discover vehicles that fit your journey, from a quick city drive to a weekend escape.</p></div><div><span className="featureSymbol">Ⓟ</span><h3>Parking, simplified</h3><p>Find a space when you need one, with time-based reservations and clear pricing.</p></div><div><span className="featureSymbol">ϟ</span><h3>Charge with confidence</h3><p>Find compatible charging locations and operator-provided slots in one place.</p></div></div></div></section>
