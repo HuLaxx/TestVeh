@@ -10,7 +10,7 @@ export async function GET() {
   try {
     const user=await currentUser();if(!user)return NextResponse.json({error:'Sign in required'},{status:401});
     const r=await database().query(
-     'SELECT b.id,b.start_at,b.end_at,CASE WHEN b.status='requested' AND b.expires_at<=NOW() THEN 'expired' ELSE b.status END AS status,b.expires_at,b.total_paise,b.created_at,r.title,r.city,r.area,r.kind FROM reservations b JOIN resources r ON b.resource_id=r.id WHERE b.user_id=$1 ORDER BY b.created_at DESC LIMIT 100',[user.id]);
+     "SELECT b.id,b.start_at,b.end_at,CASE WHEN b.status='requested' AND b.expires_at<=NOW() THEN 'expired' ELSE b.status END AS status,b.expires_at,b.total_paise,b.created_at,r.title,r.city,r.area,r.kind FROM reservations b JOIN resources r ON b.resource_id=r.id WHERE b.user_id=$1 ORDER BY b.created_at DESC LIMIT 100",[user.id]);
     return NextResponse.json({bookings:r.rows},{headers:{'Cache-Control':'no-store'}});
   }catch{return NextResponse.json({error:'Could not load bookings.'},{status:503});}
 }
@@ -32,7 +32,7 @@ export async function POST(req) {
     await client.query("UPDATE reservations SET status='expired',updated_at=NOW() WHERE resource_id=$1 AND status='requested' AND expires_at<=NOW()",[resourceId]);
     const price=totalInPaise(Number(r.rows[0].price_per_hour),interval.hours);
     const row=await client.query(
-      'INSERT INTO reservations(resource_id,user_id,start_at,end_at,status,total_paise,expires_at) VALUES($1,$2,$3,$4,$5,$6,NOW()+INTERVAL '2 hours') RETURNING id,status,start_at,end_at,total_paise,expires_at',
+      "INSERT INTO reservations(resource_id,user_id,start_at,end_at,status,total_paise,expires_at) VALUES($1,$2,$3,$4,$5,$6,NOW()+INTERVAL '2 hours') RETURNING id,status,start_at,end_at,total_paise,expires_at",
       [resourceId,user.id,interval.start,interval.end,'requested',price]);
     await client.query('COMMIT');
     return NextResponse.json({booking:row.rows[0],message:'Reservation request recorded. Operator confirmation is required within two hours; no payment taken.'},{status:201,headers:{'Cache-Control':'no-store'}});
