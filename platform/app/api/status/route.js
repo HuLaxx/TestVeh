@@ -8,7 +8,7 @@ export async function GET() {
   },{headers:{'Cache-Control':'no-store'}});
   try {
     const r=await database().query(
-      "SELECT to_regclass('public.resources') IS NOT NULL AND to_regclass('public.operators') IS NOT NULL AND to_regclass('public.auth_rate_limits') IS NOT NULL AS ready");
+      "SELECT to_regclass('public.resources') IS NOT NULL AND to_regclass('public.operators') IS NOT NULL AND to_regclass('public.auth_rate_limits') IS NOT NULL AND EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='reservations' AND column_name='expires_at') AS ready");
     const ready=Boolean(r.rows[0]?.ready);
     return NextResponse.json({
       status:ready?'ok':'setup_required',mode:ready?'live':'setup_required',

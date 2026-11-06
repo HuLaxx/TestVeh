@@ -15,9 +15,9 @@ export async function PATCH(req,{params}) {
     try{
       await client.query('BEGIN');
       const r=await client.query(
-        'SELECT b.id,b.status,b.end_at FROM reservations b JOIN resources r ON b.resource_id=r.id WHERE b.id=$1 AND r.operator_id=$2 FOR UPDATE OF b',[id,user.id]);
+        'SELECT b.id,b.status,b.end_at,b.expires_at FROM reservations b JOIN resources r ON b.resource_id=r.id WHERE b.id=$1 AND r.operator_id=$2 FOR UPDATE OF b',[id,user.id]);
       if(!r.rowCount){await client.query('ROLLBACK');return NextResponse.json({error:'Reservation not found.'},{status:404});}
-      if(!decisionAllowed(r.rows[0].status,next,r.rows[0].end_at)){
+      if((next==='confirmed' && r.rows[0].expires_at && new Date(r.rows[0].expires_at)<=new Date()) || !decisionAllowed(r.rows[0].status,next,r.rows[0].end_at)){
         await client.query('ROLLBACK');return NextResponse.json({error:'This reservation cannot move to that status.'},{status:409});
       }
       const updated=await client.query('UPDATE reservations SET status=$1,updated_at=NOW() WHERE id=$2 RETURNING id,status',[next,id]);

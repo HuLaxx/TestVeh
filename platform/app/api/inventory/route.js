@@ -19,7 +19,7 @@ export async function GET(req) {
   try {
     const sql="SELECT r.id,r.kind,r.title,r.subtitle,r.city,r.area,r.price_per_hour,r.features, "+
       "CASE WHEN $3::timestamptz IS NULL THEN NULL ELSE NOT EXISTS("+
-      "SELECT 1 FROM reservations b WHERE b.resource_id=r.id AND b.status IN ('requested','confirmed') "+
+      "SELECT 1 FROM reservations b WHERE b.resource_id=r.id AND (b.status='confirmed' OR (b.status='requested' AND b.expires_at>NOW())) "+
       "AND b.start_at < $4::timestamptz AND b.end_at > $3::timestamptz) END AS available "+
       "FROM resources r JOIN operators o ON o.user_id=r.operator_id AND o.status='approved' WHERE r.active=true AND r.review_status='approved' AND ($1::text IS NULL OR r.kind=$1) "+
       "AND ($2::text IS NULL OR lower(r.city)=lower($2)) ORDER BY r.created_at DESC LIMIT 150";

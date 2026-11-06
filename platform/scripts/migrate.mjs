@@ -5,7 +5,7 @@ if(!process.env.DATABASE_URL)throw Error('Set DATABASE_URL in your environment b
 const db=new pg.Client({connectionString:process.env.DATABASE_URL});
 try{
   await db.connect();
-  for(const file of ['001_init.sql','002_marketplace.sql','003_auth_limits.sql']) {
+  for(const file of ['001_init.sql','002_marketplace.sql','003_auth_limits.sql','004_request_expiry.sql']) {
     await db.query(await readFile(new URL('../sql/'+file,import.meta.url),'utf8'));
     console.log('Applied '+file);
   }

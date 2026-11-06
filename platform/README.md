@@ -30,7 +30,7 @@ To enable server-backed data, set `DATABASE_URL` in the deployment environment s
 npm run db:migrate
 ```
 
-Migrations run `001_init.sql`, `002_marketplace.sql`, and `003_auth_limits.sql`. Operators must apply through `/partner`, and administrators must manually review applications and resources.
+Migrations run `001_init.sql`, `002_marketplace.sql`, `003_auth_limits.sql`, and `004_request_expiry.sql`. Operators must apply through `/partner`, and administrators must manually review applications and resources.
 
 ### Initial administrator bootstrap
 
@@ -48,7 +48,7 @@ Never grant admin access through public registration or by supplying an arbitrar
 
 - A submitted listing begins `pending` and `active=false`. Only an administrator can approve/publish it; changing listing details forces another review.
 - The search and reservation APIs require approved operator **and** approved, active inventory; unverified items cannot accept bookings.
-- PostgreSQL exclusion constraints reject overlapping `requested` and `confirmed` bookings for the same resource. API prices are calculated on the server. Reservations are **requests**; no money is collected.
+- Reservation requests expire after two hours unless confirmed; stale requests are released transactionally when another customer books the resource. PostgreSQL exclusion constraints reject overlapping active `requested` and `confirmed` bookings for the same resource. API prices are calculated on the server. Reservations are **requests**; no money is collected.
 - Users can cancel their own requested reservations. Approved partners can accept/reject only requests for resources they own; state changes are checked and audited.
 - State-changing API routes check the same-origin request header in addition to session cookies. Cross-tenant resource access is blocked.
 
