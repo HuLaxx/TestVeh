@@ -1,3 +1,5 @@
+> **Live local-first app:** [TestVeh Registry](https://hulax-testveh-registry.vercel.app) · Vercel production deployment is READY. User-entered records stay in this browser, not a shared database.
+
 # TestVeh · Vehicle Registry Studio
 
 A **working standalone vehicle-records and registration-review prototype** built from the original Django/React authentication experiment. The new app runs from `site/`; it does not depend on a local Django server or unreviewed signup endpoints. Existing legacy code in the upstream repository can be preserved for reference.
@@ -16,7 +18,7 @@ With Node.js 20+, run `node --test tests/registry.test.mjs`.
 
 ## Vercel
 
-`vercel.json` configures static publishing of `site/`. Connect `HuLaxx/TestVeh` to Vercel, use branch `master`, and deploy as a static site. A live public deployment has not been verified.
+`vercel.json` configures static publishing of `site/`. Connect `HuLaxx/TestVeh` to Vercel, use branch `master`, and deploy as a static site. The Vercel project was deployed directly from source and reports READY; GitHub auto-deploy linking is not yet configured.
 
 ## Production path
 
