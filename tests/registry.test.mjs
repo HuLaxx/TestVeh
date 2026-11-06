@@ -1,0 +1,5 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {sampleRecords,normalizePlate,validateRecord,searchRecords,counts,exportCSV} from '../site/registry.mjs';
+test('normalizes Indian-style demonstration plate',()=>assert.equal(normalizePlate('mh 12-ab1234'),'MH12AB1234'));
+test('validates and rejects duplicate registration',()=>{const valid=validateRecord({...sampleRecords[0],plate:'MH99ZZ9999'},sampleRecords);assert.equal(valid.plate,'MH99ZZ9999');assert.throws(()=>validateRecord({...sampleRecords[0]},sampleRecords),/already/);assert.throws(()=>validateRecord({...sampleRecords[0],year:1822},[]),/year/)});
+test('search records and statuses',()=>{assert.equal(searchRecords(sampleRecords,{fuel:'Electric'}).length,2);assert.equal(counts(sampleRecords).pending,2);assert.equal(counts(sampleRecords).reviewed,1)});
+test('CSV quotes and escapes text',()=>{const s=exportCSV([{...sampleRecords[0],notes:'Hello, "world"'}]);assert.match(s,/"Hello, ""world"""/);assert.match(s,/MH12EX2401/)});
