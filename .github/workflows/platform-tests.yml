@@ -15,6 +15,23 @@ permissions:
 jobs:
   test-and-build:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: testveh_test
+          POSTGRES_USER: testveh
+          POSTGRES_PASSWORD: local_ci_only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U testveh -d testveh_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      DATABASE_URL: postgres://testveh:local_ci_only@localhost:5432/testveh_test
+      TEST_DATABASE_URL: postgres://testveh:local_ci_only@localhost:5432/testveh_test
     defaults:
       run:
         working-directory: platform
@@ -26,5 +43,9 @@ jobs:
         with:
           node-version: '22'
       - run: npm install --no-audit --no-fund
+      - name: Apply database migrations twice to verify idempotence
+        run: |
+          npm run db:migrate
+          npm run db:migrate
       - run: npm test
       - run: npm run build
