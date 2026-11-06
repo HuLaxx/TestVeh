@@ -1,5 +1,6 @@
 
 import './globals.css';
+import './portal.css';
 export const metadata={
   title:'TestVeh | Vehicles, Parking & EV Charging',
   description:'TestVeh mobility platform. Discover vehicles, parking and EV charging in one place. Sample inventory is explicitly marked.'

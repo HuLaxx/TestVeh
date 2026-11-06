@@ -30,7 +30,7 @@ To enable server-backed data, set `DATABASE_URL` in the deployment environment s
 npm run db:migrate
 ```
 
-Migrations run `001_init.sql` and `002_marketplace.sql`. Operators must apply through `/partner`, and administrators must manually review applications and resources.
+Migrations run `001_init.sql`, `002_marketplace.sql`, and `003_auth_limits.sql`. Operators must apply through `/partner`, and administrators must manually review applications and resources.
 
 ### Initial administrator bootstrap
 

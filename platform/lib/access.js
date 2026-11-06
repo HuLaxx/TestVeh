@@ -7,7 +7,7 @@ export class ApiError extends Error {
 }
 export function sameOrigin(req) {
   const origin=req.headers.get('origin');
-  const host=req.headers.get('x-forwarded-host')||req.headers.get('host');
+  const host=req.headers.get('host')||req.headers.get('x-forwarded-host');
   try{
     if(!origin || !host || new URL(origin).host.toLowerCase()!==host.toLowerCase()) return false;
     return new URL(origin).protocol==='https:' || (new URL(origin).protocol==='http:' && /^(localhost|127\.0\.0\.1)(:\d+)?$/.test(host));

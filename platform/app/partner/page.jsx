@@ -1,6 +1,5 @@
 'use client';
 import {useCallback,useEffect,useState} from 'react';
-import '../portal.css';
 
 const empty={kind:'vehicle',title:'',subtitle:'',city:'',area:'',price_per_hour:'',features:''};
 const money=n=>'₹'+Number(n||0).toLocaleString('en-IN');

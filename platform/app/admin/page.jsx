@@ -1,6 +1,5 @@
 'use client';
 import {useCallback,useEffect,useState} from 'react';
-import '../portal.css';
 async function api(url,options={}) {
  const r=await fetch(url,{...options,cache:'no-store',headers:{'content-type':'application/json',...options.headers}});
  const data=await r.json().catch(()=>({}));if(!r.ok)throw Error(data.error||'Service unavailable.');return data;
