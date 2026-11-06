@@ -12,7 +12,6 @@ const TABS=[
 ];
 const symbols={vehicle:'🚙',parking:'Ⓟ',charging:'⚡'};
 const gradients={vehicle:'vehicleArt',parking:'parkingArt',charging:'chargingArt'};
-const cities=['All cities','Pune','Mumbai','Bengaluru'];
 const INR=n=>'₹'+Number(n||0).toLocaleString('en-IN');
 function Label({children}){return <span className="fieldLabel">{children}</span>;}
 function Icon({name}){return <span className="serviceIcon" aria-hidden="true">{symbols[name]||'✦'}</span>;}
@@ -39,6 +38,7 @@ export default function Home(){
  const showToast=(s)=>{setMessage(s);setError('');};
  const showError=(s)=>{setError(s);setMessage('');};
  const isDemo=mode!=='live';
+ const cities=useMemo(()=>['All cities',...new Set(items.map(x=>x.city).filter(Boolean))],[items]);
 
  async function load(controller){
    setLoading(true);
@@ -83,7 +83,6 @@ export default function Home(){
  }
  function validDates(){
    if(!start||!end){showError('Select a start and end time to request a reservation.');return false;}
-   const a=new Date(start),b=new Date(end);
    try{parseInterval(start,end);return true;}catch(e){showError(e.message);return false;}
  }
  async function reserve(item){
@@ -113,7 +112,7 @@ export default function Home(){
    <header className="topbar">
     <div className="topInner">
      <a href="/" className="logo" aria-label="TestVeh home"><span className="brandMark">T<span>V</span></span><span>test<span className="logoAccent">veh</span><small>MOVE SMARTER</small></span></a>
-     <nav className="primaryNav"><a href="#explore">Explore services</a><a href="#how-it-works">How it works</a><a href="#why-testveh">Why TestVeh</a></nav>
+     <nav className="primaryNav"><a href="#explore">Explore services</a><a href="/partner">For partners</a><a href="#how-it-works">How it works</a><a href="#why-testveh">Why TestVeh</a></nav>
      <div className="rightNav"><span className={'modeChip '+(isDemo?'sampleChip':'liveChip')}><span className="chipDot"/>{isDemo?'Product preview':'Database connected'}</span>{user?<button className="outlineButton" onClick={showBookings}>My bookings</button>:<button className="outlineButton" onClick={()=>openAuth('login')}>Sign in</button>}<button className="solidButton navJoin" onClick={()=>user?showBookings():openAuth('register')}>{user?'Account':'Get started'} <span>↗</span></button></div>
     </div>
    </header>

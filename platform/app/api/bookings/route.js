@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { currentUser } from '../../../lib/auth.js';
 import { database,configured } from '../../../lib/db.js';
 import { parseInterval,totalInPaise } from '../../../lib/booking-rules.mjs';
+import { sameOrigin } from '../../../lib/access.js';
 export const dynamic='force-dynamic';
 export async function GET() {
   if(!configured())return NextResponse.json({error:'Database required.'},{status:503});
@@ -14,6 +15,7 @@ export async function GET() {
   }catch{return NextResponse.json({error:'Could not load bookings.'},{status:503});}
 }
 export async function POST(req) {
+  if(!sameOrigin(req))return NextResponse.json({error:'Request origin not allowed.'},{status:403});
   if(!configured())return NextResponse.json({error:'Bookings are disabled until the database is connected.'},{status:503});
   let data;try{data=await req.json();}catch{return NextResponse.json({error:'Invalid request'},{status:400});}
   const resourceId=String(data.resourceId||'');
@@ -24,8 +26,8 @@ export async function POST(req) {
   if(!client)return NextResponse.json({error:'Reservation service unavailable'},{status:503});
   try {
     await client.query('BEGIN');
-    const r=await client.query('SELECT id,price_per_hour,active FROM resources WHERE id=$1 FOR UPDATE',[resourceId]);
-    if(!r.rows[0]?.active){await client.query('ROLLBACK');return NextResponse.json({error:'Item is not currently bookable.'},{status:404});}
+    const r=await client.query("SELECT r.id,r.price_per_hour,r.active,r.review_status,o.status AS operator_status FROM resources r LEFT JOIN operators o ON o.user_id=r.operator_id WHERE r.id=$1 FOR UPDATE OF r",[resourceId]);
+    if(!r.rows[0]?.active || r.rows[0].review_status!=='approved' || r.rows[0].operator_status!=='approved'){await client.query('ROLLBACK');return NextResponse.json({error:'Item is not currently bookable.'},{status:404});}
     const price=totalInPaise(Number(r.rows[0].price_per_hour),interval.hours);
     const row=await client.query(
       'INSERT INTO reservations(resource_id,user_id,start_at,end_at,status,total_paise) VALUES($1,$2,$3,$4,$5,$6) RETURNING id,status,start_at,end_at,total_paise',

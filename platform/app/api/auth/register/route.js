@@ -1,8 +1,10 @@
 
 import { NextResponse } from 'next/server';
+import { sameOrigin } from '../../../../lib/access.js';
 import { database,configured } from '../../../../lib/db.js';
 import { cleanEmail,validEmail,hashPassword,issueSession } from '../../../../lib/auth.js';
 export async function POST(req) {
+  if(!sameOrigin(req))return NextResponse.json({error:'Request origin not allowed.'},{status:403});
   if(!configured())return NextResponse.json({error:'Accounts require a connected database.'},{status:503});
   try {
     const data=await req.json();

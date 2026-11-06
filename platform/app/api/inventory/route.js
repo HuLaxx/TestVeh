@@ -21,7 +21,7 @@ export async function GET(req) {
       "CASE WHEN $3::timestamptz IS NULL THEN NULL ELSE NOT EXISTS("+
       "SELECT 1 FROM reservations b WHERE b.resource_id=r.id AND b.status IN ('requested','confirmed') "+
       "AND b.start_at < $4::timestamptz AND b.end_at > $3::timestamptz) END AS available "+
-      "FROM resources r WHERE r.active=true AND ($1::text IS NULL OR r.kind=$1) "+
+      "FROM resources r JOIN operators o ON o.user_id=r.operator_id AND o.status='approved' WHERE r.active=true AND r.review_status='approved' AND ($1::text IS NULL OR r.kind=$1) "+
       "AND ($2::text IS NULL OR lower(r.city)=lower($2)) ORDER BY r.created_at DESC LIMIT 150";
     const result=await database().query(sql,[kind,city,interval?.start||null,interval?.end||null]);
     return NextResponse.json({mode:'live',items:result.rows.map(normalizeItem),disclaimer:'Operator-published inventory. EV charger physical status is not live telemetry.'},{headers:{'Cache-Control':'no-store'}});
