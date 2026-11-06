@@ -2,6 +2,7 @@
 'use client';
 import {useState,useEffect,useMemo} from 'react';
 import {samples} from '../lib/catalog.js';
+import {inventorySearchParams,parseInterval} from '../lib/booking-rules.mjs';
 
 const TABS=[
   {id:'all',name:'All services',icon:'✦'},
@@ -39,19 +40,28 @@ export default function Home(){
  const showError=(s)=>{setError(s);setMessage('');};
  const isDemo=mode!=='live';
 
- async function load(){
+ async function load(controller){
    setLoading(true);
+   let query;
+   try{query=inventorySearchParams(start,end);}catch(e){
+     setItems(previous=>previous.map(item=>({...item,available:null})));
+     showError(e.message);setLoading(false);return;
+   }
    try{
-     const r=await fetch('/api/inventory',{cache:'no-store'});
+     const r=await fetch('/api/inventory'+query,{cache:'no-store',signal:controller.signal});
      const data=await r.json();if(!r.ok)throw Error(data.error||'Inventory unavailable');
+     if(controller.signal.aborted)return;
      setMode(data.mode);setItems(data.items||[]);
-   }catch(e){setItems(samples);setMode('demonstration');showError('Could not reach inventory service. Showing clearly labeled sample listings.');}
-   finally{setLoading(false);}
+   }catch(e){
+     if(controller.signal.aborted)return;
+     setItems(samples);setMode('demonstration');showError('Could not reach inventory service. Showing clearly labeled sample listings.');
+   }finally{if(!controller.signal.aborted)setLoading(false);}
  }
  async function loadUser(){
    try{const r=await fetch('/api/auth/me',{cache:'no-store'});if(r.ok){const d=await r.json();setUser(d.user||null);}}catch{}
  }
- useEffect(()=>{load();loadUser();},[]);
+ useEffect(()=>{const controller=new AbortController();load(controller);return ()=>controller.abort();},[start,end]);
+ useEffect(()=>{loadUser();},[]);
  const found=useMemo(()=>items.filter(item=>{
    const text=[item.title,item.city,item.area,item.subtitle,...(item.features||[])].join(' ').toLowerCase();
    return (kind==='all'||kind===item.kind)&&(city==='All cities'||city===item.city)&&text.includes(search.toLowerCase().trim())&&item.price_per_hour<=limit;
@@ -74,8 +84,7 @@ export default function Home(){
  function validDates(){
    if(!start||!end){showError('Select a start and end time to request a reservation.');return false;}
    const a=new Date(start),b=new Date(end);
-   if(!(a.getTime()>Date.now()+10*60*1000&&b>a)){showError('Choose a future period, with end time after start time.');return false;}
-   return true;
+   try{parseInterval(start,end);return true;}catch(e){showError(e.message);return false;}
  }
  async function reserve(item){
    if(item.demo||isDemo){showError('This is illustrative inventory, not a live booking. Real bookings will be enabled after connecting verified operator inventory and a database.');return;}
@@ -131,7 +140,7 @@ export default function Home(){
       {!!error&&<div className="feedback error" role="alert"><span>!</span>{error}<button onClick={()=>setError('')} aria-label="Dismiss error">×</button></div>}
       {!!message&&<div className="feedback success" role="status"><span>✓</span>{message}<button onClick={()=>setMessage('')} aria-label="Dismiss notification">×</button></div>}
       {loading?<div className="emptyState">Loading services…</div>:found.length===0?<div className="emptyState"><strong>No matching listings</strong><p>Try another city, service type or price range.</p><button className="outlineButton" onClick={()=>{setKind('all');setCity('All cities');setSearch('');setLimit(1000)}}>Reset filters</button></div>:
-      <div className="cardGrid">{found.map((item,i)=><article className="listingCard" key={item.id}><div className={'listingVisual '+gradients[item.kind]}><span className="listingNumber">TV / 0{i+1}</span><div className="listingGlyph"><Icon name={item.kind}/></div><span className="listingCategory">{item.kind==='vehicle'?'VEHICLE RENTAL':item.kind==='parking'?'SMART PARKING':'EV CHARGING'}</span></div><div className="listingBody"><div className="itemLocation">⌖ {item.area}, {item.city}</div><h4>{item.title}</h4><p>{item.subtitle}</p><div className="featureList">{(item.features||[]).slice(0,3).map(f=><span key={f}>{f}</span>)}</div><div className="listingFoot"><div className="rate"><strong>{INR(item.price_per_hour)}</strong><small>/ hour</small></div><button className={'bookButton '+(item.demo||isDemo?'disabledBook':'')} onClick={()=>reserve(item)} disabled={working} aria-label={'Request booking for '+item.title}>{item.demo||isDemo?'Preview listing':'Request booking'} <span>↗</span></button></div></div></article>)}</div>}
+      <div className="cardGrid">{found.map((item,i)=><article className="listingCard" key={item.id}><div className={'listingVisual '+gradients[item.kind]}><span className="listingNumber">TV / 0{i+1}</span><div className="listingGlyph"><Icon name={item.kind}/></div><span className="listingCategory">{item.kind==='vehicle'?'VEHICLE RENTAL':item.kind==='parking'?'SMART PARKING':'EV CHARGING'}</span></div><div className="listingBody"><div className="itemLocation">⌖ {item.area}, {item.city}</div><h4>{item.title}</h4><p>{item.subtitle}</p><div className="featureList">{(item.features||[]).slice(0,3).map(f=><span key={f}>{f}</span>)}</div><div className="listingFoot"><div className="rate"><strong>{INR(item.price_per_hour)}</strong><small>/ hour</small></div><button className={'bookButton '+(item.demo||isDemo||item.available===false?'disabledBook':'')} onClick={()=>reserve(item)} disabled={working||item.available===false} aria-label={'Request booking for '+item.title}>{item.demo||isDemo?'Preview listing':item.available===false?'Unavailable':'Request booking'} <span>↗</span></button></div></div></article>)}</div>}
      </section>
      <section className="servicesShowcase" id="why-testveh"><div className="container"><div className="eyebrow">02 / ALL IN ONE PLACE</div><div className="showcaseTitle"><h2>One city.<br/><em>Endless possibilities.</em></h2><p>Built to bring the essential parts of urban mobility together without the clutter.</p></div><div className="featureGrid"><div><span className="featureSymbol">↗</span><h3>Freedom to move</h3><p>Discover vehicles that fit your journey, from a quick city drive to a weekend escape.</p></div><div><span className="featureSymbol">Ⓟ</span><h3>Parking, simplified</h3><p>Find a space when you need one, with time-based reservations and clear pricing.</p></div><div><span className="featureSymbol">ϟ</span><h3>Charge with confidence</h3><p>Find compatible charging locations and operator-provided slots in one place.</p></div></div></div></section>
      <section id="how-it-works" className="how container"><div><div className="eyebrow darkEyebrow">03 / HOW IT WORKS</div><h2>Less planning.<br/><em>More going.</em></h2></div><div className="steps"><div><span>01</span><div><h3>Discover</h3><p>Choose a service and find relevant inventory in your city.</p></div></div><div><span>02</span><div><h3>Choose your time</h3><p>Select a start and end time, then check the offered availability.</p></div></div><div><span>03</span><div><h3>Request & go</h3><p>Send a reservation request. An operator confirms it before your trip.</p></div></div></div></section>
