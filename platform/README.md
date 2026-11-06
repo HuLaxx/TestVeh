@@ -56,7 +56,7 @@ Never grant admin access through public registration or by supplying an arbitrar
 
 1. Add verified business onboarding, actual vehicle/parking/charging ownership or operating authority checks, insurance and jurisdiction-specific compliance.
 2. Configure managed PostgreSQL with least-privilege credentials, backups, retention, monitored migrations and real operator inventory.
-3. Complete account email verification, password reset, multi-factor protection for administrators, anti-abuse/rate limiting and security testing.
+3. Complete account email verification, password reset, multi-factor protection for administrators, broader anti-abuse measures, and security testing. Login requests currently have a basic database-backed attempt limit; registration and per-IP protection remain launch work.
 4. Integrate a payment provider with signed webhooks, idempotent payment/booking reconciliation, refund and cancellation policy, and an internal ledger **before** any checkout is enabled.
 5. Add verified addresses/map locations, accurate service-specific availability, blackout schedules, charger connector capacities and transparent uptime/occupancy disclaimers.
 6. Implement accessibility, automated browser tests, service monitoring, privacy policy, support and complaints, incident response and a staged release.

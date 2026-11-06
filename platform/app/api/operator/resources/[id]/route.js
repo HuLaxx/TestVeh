@@ -13,6 +13,11 @@ export async function PATCH(req,{params}) {
     const client=await database().connect();
     try{
       await client.query('BEGIN');
+      // Lock the resource before inspecting bookings, matching reservation creation lock order.
+      const owned=await client.query('SELECT id FROM resources WHERE id=$1 AND operator_id=$2 FOR UPDATE',[id,user.id]);
+      if(!owned.rowCount){await client.query('ROLLBACK');return NextResponse.json({error:'Listing not found.'},{status:404});}
+      const future=await client.query("SELECT EXISTS(SELECT 1 FROM reservations WHERE resource_id=$1 AND status IN ('requested','confirmed') AND end_at>NOW()) AS busy",[id]);
+      if(future.rows[0].busy){await client.query('ROLLBACK');return NextResponse.json({error:'Resolve outstanding bookings before editing this listing.'},{status:409});}
       const r=await client.query(
         'UPDATE resources SET kind=$1,title=$2,subtitle=$3,city=$4,area=$5,price_per_hour=$6,features=$7,review_status=\'pending\',active=false,updated_at=NOW() WHERE id=$8 AND operator_id=$9 RETURNING id,review_status',
         [data.kind,data.title,data.subtitle,data.city,data.area,data.price_per_hour,JSON.stringify(data.features),id,user.id]);

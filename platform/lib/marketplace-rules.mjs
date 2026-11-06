@@ -31,7 +31,8 @@ export function parseResource(data) {
   return {kind:data.kind,title,subtitle,city,area,price_per_hour:price,features};
 }
 export function decisionAllowed(previous,next,endAt,now=new Date()) {
-  if(previous==='requested' && (next==='confirmed'||next==='rejected')) return true;
+  if(previous==='requested' && next==='rejected') return true;
+  if(previous==='requested' && next==='confirmed' && new Date(endAt).getTime()>now.getTime()) return true;
   if(previous==='confirmed' && next==='completed' && new Date(endAt).getTime()<=now.getTime()) return true;
   return false;
 }

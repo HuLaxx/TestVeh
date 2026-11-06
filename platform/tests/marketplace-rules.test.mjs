@@ -36,6 +36,7 @@ test('only permitted reservation transitions are allowed',()=>{
   const past='2026-11-05T12:00:00.000Z';
   const now=new Date('2026-11-06T12:00:00.000Z');
   assert.ok(decisionAllowed('requested','confirmed',future,now));
+  assert.equal(decisionAllowed('requested','confirmed',past,now),false);
   assert.ok(decisionAllowed('requested','rejected',future,now));
   assert.ok(decisionAllowed('confirmed','completed',past,now));
   assert.equal(decisionAllowed('confirmed','completed',future,now),false);
