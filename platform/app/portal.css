@@ -1,0 +1,50 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
+.tvPortal{min-height:100vh;background:#f3f7f3;color:#1b3229;font-family:'DM Sans',Arial,sans-serif}
+.tvPortal *{box-sizing:border-box}
+.tvPortal button,.tvPortal input,.tvPortal select,.tvPortal textarea{font:inherit}
+.tvTop{background:#102d27;color:white;padding:18px max(5vw,20px);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.tvBrand{font-size:24px;font-weight:800;letter-spacing:-1px;color:#fff;text-decoration:none}
+.tvBrand span{color:#bfe69a}
+.tvTop nav{display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+.tvTop a:not(.tvBrand){font-size:13px;color:#d4e6d6;text-decoration:none}
+.tvTop a:hover{text-decoration:underline}
+.tvMain{width:min(1150px,calc(100% - 40px));margin:0 auto;padding:42px 0 90px}
+.tvHero{background:#143b31;border-radius:20px;color:white;padding:42px;display:flex;justify-content:space-between;gap:20px;align-items:center}
+.tvHero small{font-size:10px;letter-spacing:2px;color:#bce6a7;font-weight:800}
+.tvHero h1{font-size:clamp(30px,4vw,52px);letter-spacing:-2px;margin:13px 0}
+.tvHero p{max-width:660px;line-height:1.7;color:#c2dbce;font-size:14px}
+.tvPill{border:1px solid #5e8b75;padding:8px 12px;border-radius:50px;font-size:11px;white-space:nowrap}
+.tvSection{margin-top:30px}
+.tvSection h2{font-size:24px;letter-spacing:-.8px}
+.tvGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:17px}
+.tvCard{background:#fff;border:1px solid #dae6db;border-radius:14px;padding:22px;box-shadow:0 5px 14px #224a2b08;min-width:0}
+.tvCard h3{margin:4px 0 8px;font-size:20px}
+.tvCard p,.tvHelp{line-height:1.6;color:#698174;font-size:13px}
+.tvLabel{font-weight:800;font-size:11px;color:#426453;letter-spacing:.4px;display:block;margin-top:13px}
+.tvLabel input,.tvLabel select,.tvLabel textarea{margin-top:7px;display:block;width:100%;border:1px solid #cbdccc;border-radius:9px;padding:12px;color:#16372b;background:#fff;font-weight:500;min-width:0}
+.tvLabel textarea{min-height:86px}
+.tvButton{background:#184e38;color:white;padding:11px 15px;border:0;border-radius:8px;cursor:pointer;font-size:12px;font-weight:800}
+.tvButton:disabled{opacity:.52;cursor:not-allowed}
+.tvSecondary{background:#eef5ee;color:#174934;border:1px solid #ccdfd1}
+.tvDanger{background:#fff0ee;color:#903d33;border:1px solid #eed3ce}
+.tvButtons{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-top:17px}
+.tvAlert{margin:20px 0;background:#fff7e6;color:#6c4b23;border:1px solid #f0dfb7;padding:15px 18px;border-radius:10px;font-size:13px;line-height:1.6}
+.tvError{background:#ffefed;color:#842e27;border-color:#f0c8c4}
+.tvSuccess{background:#e5f8ed;color:#1b6844;border-color:#b9e6c9}
+.tvItem{padding:16px 0;border-bottom:1px solid #e8f0e9}
+.tvItem:last-child{border-bottom:0}
+.tvItemTop{display:flex;justify-content:space-between;gap:15px;align-items:flex-start}
+.tvItemTop strong{font-size:15px}
+.tvItem small{color:#6e8174;display:block;margin-top:6px;font-size:12px;line-height:1.6}
+.tvState{font-size:10px;text-transform:uppercase;letter-spacing:1px;font-weight:800;background:#e9f1eb;color:#37694b;padding:7px 9px;border-radius:40px}
+.tvState[data-status='pending'],.tvState[data-status='requested']{background:#fff2d5;color:#7e5810}
+.tvState[data-status='rejected'],.tvState[data-status='suspended']{background:#ffeded;color:#a34338}
+.tvState[data-status='approved'],.tvState[data-status='confirmed']{background:#dff4e6;color:#176438}
+.tvStats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:20px}
+.tvStat{padding:18px;border-radius:12px;background:#fff;border:1px solid #e3ebe3}
+.tvStat strong{font-size:27px;display:block}.tvStat span{font-size:11px;color:#67806e}
+.tvSplit{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:18px}
+.tvLink{color:#2e7250;text-decoration:underline}
+.tvEmpty{text-align:center;padding:20px;color:#61796b;font-size:13px}
+@media(max-width:850px){.tvGrid,.tvSplit{grid-template-columns:1fr}.tvHero{display:block}.tvHero .tvPill{display:inline-block;margin-top:13px}}
+@media(max-width:520px){.tvMain{width:calc(100% - 28px);padding:22px 0 60px}.tvHero{padding:27px}.tvStats{grid-template-columns:1fr}.tvTop{padding:15px}.tvCard{padding:18px}}
