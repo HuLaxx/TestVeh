@@ -7,8 +7,35 @@ let records=load(),editing=null;
 function persist(){try{localStorage.setItem(storageKey,JSON.stringify(records));}catch{alert('Local storage unavailable or full. Changes may not persist.');}}
 function statusClass(s){return s==='Reviewed (demo)'?'reviewed':s==='Documents requested'?'documents':'pending';}
 function dateLabel(s){if(!s)return '—';return new Date(s+'T12:00:00').toLocaleDateString('en-IN',{year:'numeric',month:'short',day:'numeric'});}
+let featuredId='D-1001';
+const setPassport=(id,value)=>{const el=$(id);if(el)el.textContent=String(value??'—');};
+function updatePassport(){
+ const r=records.find(x=>x.id===featuredId)||records[0];
+ const card=$('passportCard');if(!card)return;
+ if(!r){card.hidden=true;return;}card.hidden=false;featuredId=r.id;
+ setPassport('passportModel',r.make+' '+r.model);setPassport('passportPlate',r.plate);
+ setPassport('passportFuel',r.fuel);setPassport('passportZone',r.zone);
+ setPassport('passportStatus',r.status);setPassport('passportInspect',dateLabel(r.inspection));
+ setPassport('passportId',r.id);
+ const done=(r.documents||[]).filter(x=>['identity','insurance','inspection'].includes(x)).length;
+ setPassport('passportDocs',done+' / 3 checks');
+ $('passportProgress').style.width=(done/3*100)+'%';
+ $('passportProgress').parentElement.setAttribute('aria-valuenow',String(done));
+ $('passportOpen').dataset.id=r.id;
+ document.querySelectorAll('[data-passport-select]').forEach(b=>{
+   const found=records.some(x=>x.id===b.dataset.passportSelect);
+   b.disabled=!found;
+   b.setAttribute('aria-pressed',String(b.dataset.passportSelect===featuredId));
+ });
+}
+document.addEventListener('click',event=>{
+ const t=event.target.closest('[data-passport-select]');
+ if(!t||t.disabled)return;
+ featuredId=t.dataset.passportSelect;updatePassport();
+});
+
 function render(){const c=counts(records);for(const k of ['total','pending','requests','reviewed'])$(k).textContent=c[k];const found=searchRecords(records,{q:$('search').value,status:$('status').value,fuel:$('fuel').value,type:$('type').value});$('visible').textContent=found.length+' RECORD'+(found.length===1?'':'S');$('empty').hidden=found.length!==0;
- $('rows').innerHTML=found.map(r=>'<tr><td><strong>'+esc(r.plate)+'</strong><small>'+esc(r.id)+(r.demo?' · ILLUSTRATIVE':' · LOCAL')+'</small></td><td><b>'+esc(r.make+' '+r.model)+'</b><small>'+esc(r.year+' · '+r.fuel+' · '+r.type)+'</small></td><td>'+esc(r.keeper)+'<small>'+esc(r.zone)+'</small></td><td><span class="status '+statusClass(r.status)+'">'+esc(r.status)+'</span></td><td>'+esc(dateLabel(r.inspection))+'</td><td><button class="tableaction" data-action="view" data-id="'+esc(r.id)+'">OPEN FILE ↗</button></td></tr>').join('');}
+ $('rows').innerHTML=found.map(r=>'<tr><td><strong>'+esc(r.plate)+'</strong><small>'+esc(r.id)+(r.demo?' · ILLUSTRATIVE':' · LOCAL')+'</small></td><td><b>'+esc(r.make+' '+r.model)+'</b><small>'+esc(r.year+' · '+r.fuel+' · '+r.type)+'</small></td><td>'+esc(r.keeper)+'<small>'+esc(r.zone)+'</small></td><td><span class="status '+statusClass(r.status)+'">'+esc(r.status)+'</span></td><td>'+esc(dateLabel(r.inspection))+'</td><td><button class="tableaction" data-action="view" data-id="'+esc(r.id)+'">OPEN FILE ↗</button></td></tr>').join('');updatePassport();}
 function create(){editing=null;$('modalTitle').textContent='Create a vehicle record';$('vehicleForm').reset();$('vehicleForm').elements.year.value=new Date().getFullYear();$('formError').textContent='';$('editModal').showModal()}
 function edit(id){const r=records.find(x=>x.id===id);if(!r)return;editing=id;$('modalTitle').textContent='Edit vehicle record';$('vehicleForm').reset();const form=$('vehicleForm');for(const k of ['plate','make','model','keeper','zone','year','type','fuel','inspection','status','notes'])form.elements[k].value=r[k]??'';for(const [key,field] of [['identity','doc_identity'],['insurance','doc_insurance'],['inspection','doc_inspection']])form.elements[field].checked=(r.documents||[]).includes(key);$('formError').textContent='';$('editModal').showModal()}
 function view(id){
