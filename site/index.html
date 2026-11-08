@@ -1,11 +1,145 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#101d28"><meta name="description" content="TestVeh Registry Studio is a real local-first vehicle registration and inspection review application. Fictitious demo records only; not a government service."><title>TestVeh — Vehicle Registry Studio</title><link rel="stylesheet" href="./style.css"></head><body>
-<header class="top"><div class="topinner"><a href="./" class="brand"><span class="mark">TV<span>•</span></span><strong>TESTVEH</strong><small>REGISTRY STUDIO / 07</small></a><div class="rightlinks"><span class="internal"><span class="green"></span> LOCAL WORKSPACE</span><a href="https://github.com/HuLaxx/TestVeh" target="_blank" rel="noreferrer">SOURCE CODE ↗</a></div></div></header>
-<main><section class="hero"><div class="heroinner"><div class="heroleft"><p class="eyebrow"><span class="redDot"></span> OPERATIONS FILE / NO. 007</p><h1>Every vehicle.<br><em>One clear record.</em></h1><p>A working registry-review prototype for creating vehicle records, tracking documents, and organizing inspection work. Built as a transparent local demo—not a government registration database.</p><div class="heroactions"><button id="newHero" class="primary">+ REGISTER VEHICLE (DEMO)</button><a class="outline" href="#registry">OPEN RECORDS ↗</a></div></div><div class="plateArt" aria-label="Original illustrative vehicle registration document artwork" role="img"><div class="arttop"><span>REGISTRY / FIELD RECORD</span><span>SPECIMEN 007</span></div><div class="plate"><span class="country">IND</span><strong>MH 12 EX 2401</strong></div><div class="artgrid"><div><span>VEHICLE CLASS</span><b>PASSENGER SUV</b></div><div><span>WORKFLOW</span><b>REVIEW PENDING</b></div><div><span>ISSUED BY</span><b>TESTVEH DEMO</b></div><div><span>DOCUMENT ID</span><b>NOT OFFICIAL</b></div></div><div class="stamp">SAMPLE<br>RECORD</div></div></div></section>
-<section class="note" role="status"><strong>DEMO REGISTRY — NOT AN OFFICIAL SERVICE</strong><span>Records, status changes and exports stay in this browser. No government database, ownership verification or legally valid registration certificate is created. Use fictional data only.</span></section>
-<section class="dashboard" id="registry"><div class="sectionhead"><div><p class="eyebrow">01 / REGISTRATION DESK</p><h2>Vehicle records.</h2><p>Search your register, review status, and export a copy of your own workspace.</p></div><div class="actions"><button id="export" class="smallbtn">↓ EXPORT CSV</button><button id="new" class="primary">+ NEW RECORD</button></div></div>
-<div class="stats"><div class="stat"><span>ALL RECORDS</span><strong id="total">—</strong><small>Local workspace</small></div><div class="stat"><span>PENDING REVIEW</span><strong id="pending">—</strong><small>Awaiting desk review</small></div><div class="stat"><span>DOCUMENT REQUESTS</span><strong id="requests">—</strong><small>Missing or incomplete</small></div><div class="stat"><span>REVIEWED</span><strong id="reviewed">—</strong><small>Demo workflow only</small></div></div>
-<div class="register"><div class="registertop"><div><span class="eyebrow">02 / THE REGISTER</span><h3>Find an application.</h3></div><span id="visible" class="itemcount">4 ENTRIES</span></div><div class="filters"><label class="search">⌕ <input id="search" type="search" placeholder="Search plate, model, keeper or region..." aria-label="Search vehicle records"></label><select id="status" aria-label="Filter by review status"><option>All statuses</option><option>Pending review</option><option>Documents requested</option><option>Reviewed (demo)</option></select><select id="fuel" aria-label="Filter by fuel"><option>Any fuel</option><option>Petrol</option><option>Diesel</option><option>Electric</option><option>Hybrid</option><option>CNG</option><option>Other</option></select><select id="type" aria-label="Filter by type"><option>Any type</option><option>Hatchback</option><option>Sedan</option><option>SUV</option><option>Motorcycle</option><option>Van</option><option>Truck</option><option>Other</option></select></div><div class="tableWrap"><table><thead><tr><th>REGISTRATION / RECORD</th><th>VEHICLE</th><th>CUSTODIAN</th><th>STATUS</th><th>INSPECTION DUE</th><th>ACTIONS</th></tr></thead><tbody id="rows"></tbody></table></div><div id="empty" class="empty" hidden><h3>No matching records.</h3><p>Try another filter or create a vehicle record.</p><button id="emptyNew">+ CREATE RECORD</button></div></div></section>
-<section class="footerStory"><div class="statement"><p class="eyebrow">03 / THE PRINCIPLE</p><h2>Useful records.<br>Honest boundaries.</h2><p>Record management is more than a form. It involves validation, document completeness, updates, search, auditability and privacy. TestVeh makes the core workflow tangible before a production identity or registry integration.</p></div><div class="features"><article><span>01</span><b>Register</b><p>Create a vehicle record with a normalized plate, class, model, keeper alias and inspection date.</p></article><article><span>02</span><b>Review</b><p>Track document checks and update the demo review state; changes remain local.</p></article><article><span>03</span><b>Export</b><p>Download CSV for review, or remove records you no longer need.</p></article></div></section><footer>TESTVEH / HULAX ENGINEERING LAB <span>RAHUL KHANKE · 2026</span><a href="https://github.com/HuLaxx/TestVeh" target="_blank" rel="noreferrer">PROJECT SOURCE ↗</a></footer></main>
-<dialog id="editModal"><form id="vehicleForm"><div class="dialogHead"><div><div class="eyebrow">VEHICLE REGISTER / LOCAL ONLY</div><h2 id="modalTitle">Create a vehicle record</h2></div><button type="button" class="cross" data-close="editModal" aria-label="Close form">×</button></div><p>Use fictional examples or a non-identifying keeper alias. This is not an official registration.</p><div class="fields two"><label>Registration plate<input name="plate" required placeholder="MH12AB1234" maxlength="16" autocomplete="off"></label><label>Keeper label (not a real name)<input name="keeper" required maxlength="65" placeholder="Demo Fleet A" autocomplete="off"></label></div><div class="fields two"><label>Manufacturer<input name="make" required maxlength="50" placeholder="Tata"></label><label>Model<input name="model" required maxlength="60" placeholder="Nexon EV"></label></div><div class="fields three"><label>Vehicle class<select name="type"><option>Hatchback</option><option>Sedan</option><option>SUV</option><option>Motorcycle</option><option>Van</option><option>Truck</option><option>Other</option></select></label><label>Fuel<select name="fuel"><option>Petrol</option><option>Diesel</option><option>Electric</option><option>Hybrid</option><option>CNG</option><option>Other</option></select></label><label>Year<input name="year" type="number" min="1980" max="2030" value="2024" required></label></div><div class="fields two"><label>Region<input name="zone" required maxlength="65" placeholder="Pune"></label><label>Next inspection date<input name="inspection" type="date"></label></div><label class="fieldlabel">Document checklist (local simulation)</label><div class="checks"><label><input type="checkbox" name="doc_identity"> Keeper proof reviewed</label><label><input type="checkbox" name="doc_insurance"> Insurance reviewed</label><label><input type="checkbox" name="doc_inspection"> Inspection report reviewed</label></div><label class="fieldlabel">Desk-review status<select name="status"><option>Pending review</option><option>Documents requested</option><option>Reviewed (demo)</option></select></label><label class="fieldlabel">Review notes<textarea name="notes" rows="3" maxlength="450" placeholder="Context for this local demonstration..."></textarea></label><p id="formError" class="error" role="alert"></p><button class="primary wide" type="submit">SAVE LOCAL RECORD ↗</button></form></dialog>
-<dialog id="viewModal"><div id="details"></div></dialog>
-<script type="module" src="./app.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#101914">
+  <meta name="description" content="VEH by HuLaX — a creative EV bicycle rental experience. Discover e-bikes, check battery and estimated range, reserve, navigate, and explore a simulated ride dashboard. Public demonstration only.">
+  <meta property="og:title" content="VEH — Move different.">
+  <meta property="og:description" content="Find your next e-bike. See its power. Book your ride. Follow the journey. An interactive EV mobility concept by HuLaX.">
+  <link rel="canonical" href="https://vehical.hulax.uk/">
+  <link rel="stylesheet" href="./motion.css">
+  <title>VEH — Electric Mobility, Unlocked | HuLaX</title>
+</head>
+<body>
+  <div class="noise" aria-hidden="true"></div>
+  <header class="topbar">
+    <a class="wordmark" href="#top" aria-label="VEH home"><span class="word-symbol">V<span>↗</span></span><span class="word-name">veh<span class="word-period">.</span></span><span class="word-by">BY HULAX<br>MOVE SYSTEM 001</span></a>
+    <nav class="mainnav" aria-label="Primary navigation">
+      <a href="#network">DISCOVER BIKES</a><a href="#journey">THE JOURNEY</a><a href="#energy">CHARGE NETWORK</a>
+    </nav>
+    <div class="top-actions"><span class="network-indicator"><span class="blinkdot"></span>DEMO CITY ONLINE</span><button id="navRide" type="button" class="navRide" aria-label="View your ride">MY RIDE <span id="rideDot" class="ride-dot" hidden></span>↗</button></div>
+  </header>
+  <main id="top">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-inner">
+        <div class="hero-copy">
+          <div class="hero-eyebrow"><span class="eyedot"></span> MICRO-MOBILITY, MAXIMUM FREEDOM <span class="linecode">/ 00.1</span></div>
+          <h1 id="hero-title">YOUR CITY.<br>YOUR <span class="outlined">MOVE.</span><br><em>ELECTRIC.</em></h1>
+          <p>From <b>find</b> to <b>freedom</b>. Discover a ride, check its battery, reserve your bike, follow the route and make every kilometre yours.</p>
+          <div class="hero-ctas"><a href="#network" class="cta-main">FIND A BIKE <span aria-hidden="true">↗</span></a><button id="heroDemo" class="cta-outline" type="button">HOW THE RIDE WORKS <span aria-hidden="true">↗</span></button></div>
+          <div class="hero-foot"><span>01 / DISCOVER</span><span>02 / RESERVE</span><span>03 / RIDE</span><span>04 / RETURN</span></div>
+        </div>
+        <div class="hero-object" aria-label="Illustration of a futuristic electric urban bicycle">
+          <div class="hero-orbit orbit-one"></div><div class="hero-orbit orbit-two"></div>
+          <div class="hero-object-top"><span>VEH / DESIGN EXPERIMENT</span><span>URBAN RIDE SYSTEM</span></div>
+          <svg class="bike-drawing" viewBox="0 0 940 580" role="img" aria-label="Custom original neon technical side illustration of a city e-bike">
+            <defs>
+              <linearGradient id="bikeFrame" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#f4ffd0"/><stop offset="65%" stop-color="#bce15a"/><stop offset="100%" stop-color="#8ba93e"/></linearGradient>
+              <linearGradient id="bikeMetal" x1="0%" x2="0%" y1="0%" y2="100%"><stop offset="0%" stop-color="#c5d4c2"/><stop offset="100%" stop-color="#667b70"/></linearGradient>
+            </defs>
+            <g fill="none" stroke="#778e78" opacity=".37" stroke-width="1"><path d="M20 490 H920 M20 510 H920 M60 40 V540 M880 40 V540"/><path d="M200 78 H740 M200 523 H740" stroke-dasharray="8 10"/><circle cx="254" cy="385" r="181"/><circle cx="693" cy="385" r="181"/></g>
+            <g class="wheel wheel-one" fill="none">
+              <circle cx="253" cy="384" r="160" stroke="#202e26" stroke-width="31"/>
+              <circle cx="253" cy="384" r="154" stroke="#a9b9a4" stroke-width="4"/>
+              <circle cx="253" cy="384" r="139" stroke="#425d4a" stroke-width="5"/>
+              <g stroke="#a5b9a6" stroke-width="2" opacity=".54"><path d="M253 230V538 M99 384H407 M144 276L362 492 M144 492L362 276 M194 242L312 526 M103 325L401 443 M103 443L401 325"/></g>
+              <circle cx="253" cy="384" r="28" stroke="#d5ed92" stroke-width="8"/><circle cx="253" cy="384" r="9" fill="#cde678"/>
+            </g>
+            <g class="wheel wheel-two" fill="none">
+              <circle cx="694" cy="384" r="160" stroke="#202e26" stroke-width="31"/>
+              <circle cx="694" cy="384" r="154" stroke="#a9b9a4" stroke-width="4"/>
+              <circle cx="694" cy="384" r="139" stroke="#425d4a" stroke-width="5"/>
+              <g stroke="#a5b9a6" stroke-width="2" opacity=".54"><path d="M694 230V538 M540 384H848 M585 275L803 493 M585 493L803 275 M634 242L752 526 M545 325L843 443 M545 443L843 325"/></g>
+              <circle cx="694" cy="384" r="28" stroke="#d5ed92" stroke-width="8"/><circle cx="694" cy="384" r="9" fill="#cde678"/>
+            </g>
+            <g fill="none" stroke="url(#bikeFrame)" stroke-width="23" stroke-linejoin="round" stroke-linecap="round">
+              <path d="M253 384 L386 213 L517 384 Z"/>
+              <path d="M386 213 H589 L517 384"/>
+              <path d="M589 213 L694 384"/>
+            </g>
+            <path d="M386 215 L517 385" stroke="#33472c" stroke-width="30" stroke-linecap="round"/>
+            <rect x="416" y="255" width="42" height="116" rx="11" transform="rotate(-41 436 310)" fill="#183023" stroke="#deed97" stroke-width="2"/>
+            <rect x="420" y="289" width="20" height="52" rx="8" transform="rotate(-41 430 315)" fill="#b9e24e"/>
+            <path d="M376 208 L361 171 M326 167 H430" stroke="url(#bikeMetal)" stroke-width="15" stroke-linecap="round" fill="none"/>
+            <path d="M580 201 L613 129 L692 118" stroke="url(#bikeMetal)" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <path d="M668 117 L727 123 M610 130 L601 95" stroke="#d6e3c7" stroke-width="14" stroke-linecap="round"/>
+            <path d="M601 96 Q590 79 605 76 L634 76" stroke="#b3e151" stroke-width="7" stroke-linecap="round" fill="none"/>
+            <circle cx="517" cy="384" r="47" fill="#1b3023" stroke="#d2f270" stroke-width="9"/>
+            <circle cx="517" cy="384" r="15" fill="#d2f270"/>
+            <path d="M517 384 L552 420 L583 420" stroke="#d3dcc9" stroke-width="11" stroke-linecap="round" fill="none"/>
+            <g fill="#ccf072"><rect x="674" y="133" width="25" height="11" rx="5" transform="rotate(57 687 139)"/><path d="M301 203 L352 203 L330 191 Z"/></g>
+            <g fill="#d2eaa5" font-family="monospace" font-size="12" letter-spacing="3"><text x="32" y="64">URBAN / E-01</text><text x="725" y="64">FIG. 004</text><text x="380" y="559">ELECTRIC POWERTRAIN</text></g>
+          </svg>
+          <div class="hero-power-card"><span class="power-icon">ϟ</span><span>THE FUTURE IS<br><strong>ON TWO WHEELS</strong></span></div>
+          <div class="hero-object-foot"><span>100% ELECTRIC VISION</span><span>0% BORING COMMUTES</span></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="signal-strip" role="note"><span>◈ EV MOBILITY NETWORK / DEMONSTRATION</span><span>THE INTERACTIVE MAP & BIKE TELEMETRY BELOW ARE SIMULATED — NOT LIVE GPS OR CONNECTED LOCKS</span><span>NO PAYMENT COLLECTED</span></div>
+
+    <section id="network" class="network-section" aria-labelledby="network-title">
+      <div class="section-topline"><span>01 / DISCOVER THE NETWORK</span><span>EXPLORE. COMPARE. BOOK.</span></div>
+      <div class="section-heading"><div><p class="tiny-kicker">THE CITY IS YOURS / FIELD GUIDE 001</p><h2 id="network-title">FIND YOUR <em>NEXT MOVE.</em></h2><p>Select a demo station on the map. Choose an e-bike by battery, range and ride type. Then book a simulated ride.</p></div><div class="network-stats"><div><strong id="statAvailable">—</strong><small>DEMO BIKES READY</small></div><div><strong id="statStations">05</strong><small>FICTIONAL STATIONS</small></div></div></div>
+      <div class="network-frame">
+        <div class="map-side">
+          <div class="map-toolbar"><div><span class="map-status"><span class="blinkdot"></span> MOBILITY GRID / DEMO DISTRICT</span><strong>THE MOVE MAP</strong></div><div class="map-chips"><span>⌖ SCHEMATIC MAP</span><span id="mapActiveBadge">ALL STATIONS</span></div></div>
+          <div class="city-map" id="cityMap" role="group" aria-label="Interactive fictional city map; select a bike station">
+            <div class="map-mesh" aria-hidden="true"></div>
+            <svg class="map-schematic" viewBox="0 0 900 610" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+              <path d="M-70 75 L310 115 L540 -35 M-50 268 L345 184 L960 275 M-35 500 L465 330 L951 560 M180 -20 L250 700 M468 -40 L510 700 M750 -40 L685 690" stroke="#334b3f" stroke-width="42" fill="none"/>
+              <path d="M-70 75 L310 115 L540 -35 M-50 268 L345 184 L960 275 M-35 500 L465 330 L951 560 M180 -20 L250 700 M468 -40 L510 700 M750 -40 L685 690" stroke="#809c70" stroke-width="2" stroke-dasharray="5 15" fill="none" opacity=".6"/>
+              <path d="M-40 410 Q185 390 340 480 T890 395" stroke="#34544c" stroke-width="86" fill="none" opacity=".52"/>
+              <path d="M-40 410 Q185 390 340 480 T890 395" stroke="#507f77" stroke-width="4" stroke-dasharray="2 9" fill="none" opacity=".64"/>
+              <g fill="#192b21" stroke="#294435" stroke-width="1"><rect x="64" y="125" width="82" height="100" rx="8" transform="rotate(-10 64 125)"/><rect x="349" y="37" width="93" height="106" rx="8" transform="rotate(20 349 37)"/><rect x="567" y="333" width="94" height="90" rx="8" transform="rotate(8 567 333)"/><rect x="325" y="441" width="115" height="94" rx="8" transform="rotate(-8 325 441)"/><rect x="725" y="86" width="100" height="91" rx="8" transform="rotate(9 725 86)"/></g>
+              <g font-family="monospace" fill="#658676" font-size="13" letter-spacing="4"><text x="80" y="56">NORTH QUARTER</text><text x="570" y="548">RIVER EDGE</text><text x="43" y="571">GRID 00 / SIMULATION</text></g>
+              <polyline id="routeLine" points="210,310 380,256 525,343 707,392" fill="none" stroke="#caed70" stroke-width="6" stroke-linecap="round" stroke-dasharray="13 14" opacity="0"/>
+              <circle id="routePulse" cx="210" cy="310" r="15" fill="#d2f47f" stroke="#101914" stroke-width="8" opacity="0"/>
+            </svg>
+            <div class="station-markers" id="stationMarkers"></div>
+            <div class="map-corner top-left"><span class="crosshair">✛</span> FIELD 04 • 06</div>
+            <div class="map-corner bottom-right"><span>NOT GPS / DEMO GEOMETRY</span><b>↗</b></div>
+            <div class="map-legend"><span><i class="legend-green"></i> AVAILABLE</span><span><i class="legend-gray"></i> CHARGING / UNAVAILABLE</span></div>
+          </div>
+          <div class="map-footer"><div><span>SELECTED STATION</span><strong id="stationName">All stations</strong><small id="stationDetail">Pick a pin to focus nearby e-bikes</small></div><button id="showAll" type="button">↗ VIEW ALL STATIONS</button></div>
+        </div>
+        <aside class="console" aria-label="Bicycle booking and ride console">
+          <div class="console-top"><span>◉ LIVE DEMO CONSOLE</span><span id="consoleClock">00:00</span></div>
+          <div class="console-tabs" role="tablist" aria-label="Mobility console"><button type="button" id="tabExplore" role="tab" aria-selected="true" aria-controls="explorePanel">01 / FIND A BIKE</button><button type="button" id="tabRide" role="tab" aria-selected="false" aria-controls="ridePanel">02 / MY JOURNEY <span id="tabRideIndicator" class="tab-alert" hidden></span></button></div>
+          <div class="console-panel" id="explorePanel" role="tabpanel" aria-labelledby="tabExplore">
+            <div class="console-intro"><span class="eyebrow">ELECTRIC FLEET / SAMPLE INVENTORY</span><h3>CHOOSE YOUR<br><em>CHARGE.</em></h3></div>
+            <div class="filter-row"><label for="stationFilter">STATION<select id="stationFilter"><option value="all">All demo stations</option><option value="central">Central Loop</option><option value="river">Riverbend</option><option value="park">Park Circuit</option><option value="metro">Metro Link</option><option value="east">East Studio</option></select></label><label for="typeFilter">RIDE TYPE<select id="typeFilter"><option value="all">All bikes</option><option value="city">City</option><option value="cargo">Cargo</option><option value="sport">Sport</option></select></label></div>
+            <div class="inventory-meta"><span id="bikeCount">— BIKES MATCH</span><span>BATTERY CHECK IS SIMULATED</span></div>
+            <div class="bikes" id="bikeCards" aria-live="polite"></div>
+            <div class="reserve-panel" id="reservePanel"><div class="reserve-top"><span>YOUR SELECTION</span><span>DEMO FARE</span></div><div class="reserve-bike"><div><strong id="selectedName">Select a bike</strong><small id="selectedMeta">Battery, station & range</small></div><span id="selectedRate" class="rate">—</span></div><div class="reserve-est"><span>ILLUSTRATIVE 15-MIN RIDE</span><strong id="priceEstimate">—</strong></div><button type="button" id="bookBtn" class="actionBtn" disabled>RESERVE THIS BIKE <span>↗</span></button><p>No real bike is reserved and no payment is taken.</p></div>
+          </div>
+          <div class="console-panel" id="ridePanel" role="tabpanel" aria-labelledby="tabRide" hidden>
+            <div class="ride-idline"><span>VEH / TRIP CONTROL</span><span id="ridePhaseBadge">STANDBY</span></div>
+            <h3 id="rideTitle" class="ride-title">YOUR<br><em>JOURNEY.</em></h3>
+            <p id="rideDescription" class="ride-description">Reserve an e-bike to activate your route and ride console.</p>
+            <div class="ride-bike-meta"><strong id="rideBikeName">—</strong><span id="rideBikeCode">NO ACTIVE TRIP</span></div>
+            <div class="battery-widget"><div class="battery-ring" id="batteryRing"><div><strong id="rideBattery">—</strong><span>BATTERY</span></div></div><div class="battery-numbers"><span>ESTIMATED RANGE</span><strong id="rideRange">— km</strong><span>ESTIMATED REMAINING POWER</span><small>Simulation based on demo bike settings</small></div></div>
+            <div class="ride-metrics"><div><span>TRIP DISTANCE</span><strong id="rideDistance">0.0 <small>km</small></strong></div><div><span>RIDE TIMER</span><strong id="rideTime">00:00</strong></div><div><span>FARE ESTIMATE</span><strong id="rideFare">₹0</strong></div></div>
+            <div class="hold-box" id="holdBox" hidden><span>YOUR DEMO RESERVATION</span><strong id="holdCountdown">10:00</strong><p>Walk to the selected station. This hold exists only in your browser.</p></div>
+            <div class="journey-progress" aria-label="Ride lifecycle"><span id="stepReserve">BOOK</span><span id="stepNavigate">EN ROUTE</span><span id="stepRide">RIDE</span><span id="stepReturn">RETURN</span></div>
+            <div class="ride-controls" id="rideControls"><button id="startRide" type="button" class="actionBtn" hidden>SIMULATE UNLOCK & START <span>↗</span></button><button id="pauseRide" type="button" class="minorBtn" hidden>PAUSE SIMULATION</button><button id="endRide" type="button" class="actionBtn redBtn" hidden>RETURN BIKE & END RIDE <span>↗</span></button><button id="cancelRide" type="button" class="minorBtn" hidden>CANCEL DEMO RESERVATION</button><button id="newRide" type="button" class="actionBtn" hidden>FIND ANOTHER RIDE <span>↗</span></button></div>
+            <p class="ride-disclaimer">GPS position, motion, battery drain and unlock actions are simulated. No hardware connection, charges or location collection.</p>
+          </div>
+        </aside>
+      </div>
+      <div class="under-network"><span><b>01</b> SELECT A STATION</span><span><b>02</b> CHECK THE BATTERY</span><span><b>03</b> RESERVE YOUR RIDE</span><span><b>04</b> TRACK THE JOURNEY</span></div>
+    </section>
+
+    <section class="journey" id="journey" aria-labelledby="journey-title"><div class="section-topline inverse"><span>02 / THE WHOLE RIDE</span><span>ONE CONNECTED EXPERIENCE</span></div><div class="journey-layout"><div class="journey-lead"><span class="tiny-kicker">A MICRO-MOBILITY OPERATING SYSTEM</span><h2 id="journey-title">NOT AN APP.<br>YOUR <em>WAY THROUGH.</em></h2><p>VEH connects discovery, energy awareness, booking and every moment of the ride. The interface changes with you, from choosing a bike to returning it at a dock.</p></div><div class="journey-steps"><div><span>01 / SEE</span><strong>Find your next wheel.</strong><p>Explore a mobility grid, compare nearby bikes and check battery and estimated range.</p></div><div><span>02 / BOOK</span><strong>Hold your freedom.</strong><p>Reserve a sample bike, review a clear fare estimate and see a countdown to your pickup.</p></div><div><span>03 / EN ROUTE</span><strong>Know where you're going.</strong><p>See a station-focused route visualization, unlock flow and arrival-stage ride information.</p></div><div><span>04 / TRACK</span><strong>Ride in the know.</strong><p>Experience a simulated trip dashboard: distance, duration, estimated fare, range and energy use.</p></div></div></div></section>
+
+    <section class="energy" id="energy" aria-labelledby="energy-title"><div class="section-topline"><span>03 / INTELLIGENCE, NOT GUESSWORK</span><span>POWER · ROUTES · DOCKS</span></div><div class="energy-grid"><div class="energy-title"><div class="energy-glyph" aria-hidden="true">ϟ</div><p class="tiny-kicker">ENERGY IS PART OF THE JOURNEY</p><h2 id="energy-title">ALWAYS<br>KNOW YOUR<br><em>RANGE.</em></h2></div><div class="energy-stat"><span>BATTERY FIRST</span><strong>86<span>%</span></strong><div class="energy-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><p>See battery and modelled distance before you reserve. Know when a sample bike is charging or unavailable.</p></div><div class="energy-principles"><h3>ONE PLATFORM.<br>EVERY MOVEMENT.</h3><p>Designed for electric cycles today—with architecture that can grow toward verified dock occupancy, smart-lock commands, live location, operations and transparent payments.</p><div class="energy-tags"><span>BATTERY & RANGE</span><span>STATION DISCOVERY</span><span>RESERVATION FLOW</span><span>ROUTE TRACKING</span><span>RETURN & TRIP HISTORY</span><span>CHARGING NETWORK</span></div></div></div></section>
+
+    <section class="trip-history" id="history" aria-labelledby="history-title"><div><span class="tiny-kicker">04 / YOUR MOVEMENT LOG</span><h2 id="history-title">PAST <em>JOURNEYS.</em></h2><p>Completed demonstration rides are stored locally in this browser.</p></div><div id="historyList" class="history-list" aria-live="polite"><div class="history-empty">NO RIDES YET. YOUR NEXT MOVE STARTS ABOVE. ↗</div></div></section>
+  </main>
+  <footer class="footer"><div><strong>veh<span>.</span></strong><p>BUILT TO MOVE DIFFERENT.<br>DESIGNED BY HULAX LAB / 2026</p></div><div><span>EXPLORE THE SYSTEM</span><a href="#network">FIND AN E-BIKE ↗</a><a href="#journey">HOW IT WORKS ↗</a><a href="https://github.com/HuLaxx/TestVeh" target="_blank" rel="noopener noreferrer">GITHUB SOURCE ↗</a></div><p class="footer-note">INTERACTIVE CONCEPT. ALL BIKES, STATIONS, GPS MOVEMENT, BATTERY INFORMATION, PRICES AND BOOKINGS ARE FICTIONAL. THIS SITE DOES NOT RENT OR UNLOCK REAL VEHICLES.</p></footer>
+  <dialog id="bookingDialog" class="bookingDialog"><div class="dialog-inner"><div class="dialog-head"><span>VEH / RESERVATION REVIEW</span><button type="button" id="dialogClose" aria-label="Close booking dialog">×</button></div><div class="dialog-num">01 — BOOK YOUR NEXT MOVE</div><h2>READY TO<br><em>ROLL?</em></h2><p id="dialogBike">Selected demonstration bike</p><div class="dialog-rows"><div><span>YOUR BIKE</span><strong id="dialogModel">—</strong></div><div><span>PICK-UP STATION</span><strong id="dialogStation">—</strong></div><div><span>BATTERY / RANGE</span><strong id="dialogPower">—</strong></div><div><span>ILLUSTRATIVE 15-MIN COST</span><strong id="dialogFare">—</strong></div></div><p class="dialog-honesty">This is a local demo reservation, not a real bike hold. No payment or smart-lock request will be sent.</p><div class="dialog-actions"><button type="button" class="minorBtn" id="dialogCancel">NOT YET</button><button type="button" class="actionBtn" id="confirmBooking">CONFIRM DEMO RESERVATION ↗</button></div></div></dialog>
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+  <script type="module" src="./motion.js"></script>
+</body>
+</html>

@@ -1,27 +1,52 @@
-> **Live local-first app:** [TestVeh Registry](https://hulax-testveh-registry.vercel.app) · Vercel production deployment is READY. User-entered records stay in this browser, not a shared database.
+# VEH — Electric Mobility, Unlocked
 
-# TestVeh · Vehicle Registry Studio
+**Public experience:** https://vehical.hulax.uk/
 
-A **working standalone vehicle-records and registration-review prototype** built from the original Django/React authentication experiment. The new app runs from `site/`; it does not depend on a local Django server or unreviewed signup endpoints. Existing legacy code in the upstream repository can be preserved for reference.
+> **Interactive product demo, not a real e-bike rental service.** Bikes, stations, battery readings, estimated range, routes, ride location, fares and reservations are fictional. The website cannot unlock actual bicycles, take payment or deliver actual GPS tracking.
 
-## Functional application
+## The product
 
-Create, validate, edit and delete vehicle records; search by registration number, model, keeper alias or region; filter fuel/type/review status; track sample document checks and inspection dates; inspect individual dossiers; export CSV and retain changes across reloads in the browser. It comes with four **fictional demonstration records**. Form fields and exported data are validated/escaped; model tests are included.
+VEH is an electric micro-mobility journey designed around the full rider lifecycle:
 
-**Not a government registration system:** Nothing is submitted to official authorities. The `Reviewed (demo)` state is a local-only simulation, not a legal inspection, ownership check or registration certificate. Enter fictional data, not actual personal identities, registration documents or credentials.
+**Find → Compare charge and range → Reserve → En route → Simulated unlock → Ride and track → Return → Trip history.**
 
-## Run
+The interactive prototype runs from the repository's static \`site/\` folder. It is built to feel like a distinctive e-mobility operating system with its own custom bike illustration, dark schematic map, sample station network and dynamic trip console—not a generic bicycle catalogue.
 
-Run `python -m http.server 4173 --directory site` then open http://localhost:4173.
+## Available in the demo
 
-With Node.js 20+, run `node --test tests/registry.test.mjs`.
+- Browse 8 clearly fictional e-bikes across 5 fictional stations; distinguish 7 available sample bikes from 1 sample charge-unit bike
+- Choose city, cargo or sport, filter by sample station, inspect battery percentage, estimated range and illustrative fare
+- Reserve a sample bike for 10 minutes in **this browser only**; the hold can be cancelled or will expire automatically
+- See fictional pickup station, estimated walking time and en-route status
+- Simulate unlocking; animate a schematic map route and update the trip's distance, battery, modelled remaining range, simulation clock and fare
+- Pause/resume the simulation, return the bike and save a local trip summary
+- Keep active demo ride and recent ride history in browser localStorage; no real user accounts or cloud sync
 
-## Vercel
+Simulated ride telemetry uses a **20× clock** so the interface is inspectable quickly. Model rules are in \`site/motion-model.mjs\`, UI behavior in \`site/motion.js\`, and the visual system in \`site/motion.css\`.
 
-`vercel.json` configures static publishing of `site/`. Connect `HuLaxx/TestVeh` to Vercel, use branch `master`, and deploy as a static site. The Vercel project was deployed directly from source and reports READY; GitHub auto-deploy linking is not yet configured.
+## Develop and test
 
-## Production path
+Requires a simple static file server and Node.js:
 
-This demonstrator is not a secure multi-user registry. Production would require authenticated roles, server-side data integrity and audit trails, an authorized backing database, explicit data protection rules, authentication hardening and independent tests. The original Django settings should also be hardened and tracked virtual environment files removed in a separate cleanup.
+\`\`\`sh
+python -m http.server 4173 --directory site
+# browse http://localhost:4173
+node --test tests/motion.test.mjs
+\`\`\`
 
-Built by Rahul Khanke / HuLaX.
+Vercel uses the root \`vercel.json\` to publish \`site/\` with no build dependencies. The old standalone vehicle registry is preserved in repository history as a separate experiment, and the unrelated \`platform/\` Next.js marketplace experiment is not the live app.
+
+## Real startup requirements (NOT built)
+
+To rent actual e-bikes, this demo must be connected to a trusted operating backend and hardware stack:
+
+1. **Identity & onboarding:** verified riders, eligibility checks, accessible login, account recovery, customer support, privacy policy and service area disclosures
+2. **Real fleet:** operator-owned bicycles, audited battery telemetry from BMS, lock commands with device acknowledgments, maintenance and safe ride-start verification
+3. **Real maps:** user-consented location, precise pickup coordinates, directions, geofences, parking zones, route history and location retention rules
+4. **Booking and billing:** database-side inventory locking, expiration, payments, deposits, fraud checks, reconciliation, signed webhooks, receipts and refunds
+5. **Operations:** dock charging availability, low-battery thresholds, rerouting and recovery, breakdown workflows, inventory rebalancing and incident response
+6. **Assurance:** accessibility audits, security and privacy reviews, QA against real vehicles, monitoring, support response times and jurisdiction-specific rental laws
+
+Do not present simulated battery, location or pricing as verified live information.
+
+Original concept and design by HuLaX.
