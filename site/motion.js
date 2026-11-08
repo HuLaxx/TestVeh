@@ -1,346 +1,168 @@
-import {STATIONS,BIKES,HOLD_MS,TIME_MULTIPLIER,stationFor,bikeFor,rangeKm,money,quoteFor,getPhase,reserveBike,startRide,pauseRide,resumeRide,rideMetrics,completeRide,routeForStation,routePoint} from './motion-model.mjs';
-
+// VEH / local-only interactive EV rental prototype. No payments, GPS, bike locks or live telemetry.
 const $=id=>document.getElementById(id);
-const KEY='hulax-veh-mobility-demo-v1';
-const $all=selector=>document.querySelectorAll(selector);
-let selectedBike='VE-014';
-let selectedStation='all';
-let selectedType='all';
-let currentTab='explore';
-let session={phase:'idle'};
-let history=[];
-let toastTimer=null;
-
-function loadState(){
- try{
-  const json=localStorage.getItem(KEY);
-  if(!json)return;
-  const saved=JSON.parse(json);
-  if(!saved||typeof saved!=='object')return;
-  if(saved.session&&bikeFor(saved.session.bikeId)&&['reserved','riding','paused','completed'].includes(saved.session.phase)){
-   const s=saved.session;
-   if(['reserved','riding','paused'].includes(s.phase)&&Number.isFinite(s.createdAt)&&Number.isFinite(s.holdEndsAt)&&s.holdEndsAt>s.createdAt&&Number.isFinite(s.elapsedRealMs)&&s.elapsedRealMs>=0&&Number.isFinite(s.segmentStartedAt)&&s.segmentStartedAt>=0&&s.createdAt<=Date.now()+60000){
-    session=s;
-   } else if(s.phase==='completed'&&s.summary)session=s;
-  }
-  if(Array.isArray(saved.history)){
-   history=saved.history.filter(h=>h&&typeof h==='object'&&bikeFor(h.bikeId)&&Number.isFinite(h.endedAt)&&Number.isFinite(h.fare)&&h.fare>=0&&Number.isFinite(h.distanceKm)&&h.distanceKm>=0).slice(0,12);
-  }
-  if(bikeFor(saved.selectedBike))selectedBike=saved.selectedBike;
-  if(stationFor(saved.selectedStation))selectedStation=saved.selectedStation;
- }catch{ /* unavailable or invalid local storage: run in-memory only */ }
- if(getPhase(session)==='expired')session={phase:'idle'};
- if(['reserved','riding','paused','completed'].includes(getPhase(session)))currentTab='ride';
-}
-function persist(){
- try{localStorage.setItem(KEY,JSON.stringify({session,history,selectedBike,selectedStation}));}
- catch{showToast('Browser storage is unavailable. This demo session may not survive a reload.');}
-}
-function showToast(message){
- const el=$('toast');el.textContent=message;el.hidden=false;clearTimeout(toastTimer);
- toastTimer=setTimeout(()=>{el.hidden=true;},4500);
-}
-function dateLabel(ms){
- return new Date(ms).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});
-}
-function timeLabel(ms){
- const s=Math.max(0,Math.floor(ms/1000));
- const m=Math.floor(s/60);
- return String(m).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
-}
-function bikeIsAvailable(b){
- return b.status==='available' && !(['reserved','riding','paused'].includes(getPhase(session))&&session.bikeId===b.id);
-}
-function availableCount(stationId){
- return BIKES.filter(b=>b.station===stationId&&bikeIsAvailable(b)).length;
-}
-function setTab(next){
- currentTab=next==='ride'?'ride':'explore';
- $('tabExplore').setAttribute('aria-selected',String(currentTab==='explore'));
- $('tabRide').setAttribute('aria-selected',String(currentTab==='ride'));
- $('explorePanel').hidden=currentTab!=='explore';
- $('ridePanel').hidden=currentTab!=='ride';
- $('tabExplore').tabIndex=currentTab==='explore'?0:-1;
- $('tabRide').tabIndex=currentTab==='ride'?0:-1;
- renderRide();
-}
-function focusNetwork(mode){
- if(mode)setTab(mode);
- $('network').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});
-}
-function renderStations(){
- const holder=$('stationMarkers');
- holder.replaceChildren();
- STATIONS.forEach(s=>{
-  const count=availableCount(s.id);
-  const btn=document.createElement('button');
-  btn.type='button';btn.className='station-pin';
-  btn.style.left=s.x+'%';btn.style.top=s.y+'%';
-  btn.dataset.station=s.id;
-  btn.dataset.selected=String(selectedStation===s.id);
-  btn.dataset.count=String(count);
-  btn.setAttribute('aria-label',s.name+', '+count+' sample bikes ready. Select station.');
-  btn.innerHTML='<span class="pin-glyph" aria-hidden="true">ϟ</span><span><strong>'+s.name+'</strong><small>'+count+' READY / DEMO</small></span>';
-  holder.append(btn);
+const stations=[
+{id:"central",name:"Central Loop",detail:"Civic Square · demo station",x:31,y:50,route:"210,310 380,256 525,343 707,392"},
+{id:"river",name:"Riverbend",detail:"Canal Walk · demo station",x:72,y:64,route:"210,310 380,256 525,343 707,392"},
+{id:"park",name:"Park Circuit",detail:"Garden Gate · demo station",x:59,y:25,route:"210,310 380,256 525,160 707,160"},
+{id:"metro",name:"Metro Link",detail:"Transit Hub · demo station",x:26,y:27,route:"210,310 260,256 275,165"},
+{id:"east",name:"East Studio",detail:"Creative District · demo station",x:85,y:40,route:"210,310 380,256 525,343 780,244"}
+];
+const bikes=[
+{id:"VEH-001",name:"Volt City 01",station:"central",type:"city",battery:91,range:52,rate:4,shade:"lime",available:true,tag:"MOST POPULAR"},
+{id:"VEH-002",name:"Metro Glide S",station:"central",type:"sport",battery:74,range:47,rate:5,shade:"silver",available:true,tag:"CITY SPEED"},
+{id:"VEH-003",name:"Cargo Orbit",station:"river",type:"cargo",battery:86,range:61,rate:6,shade:"orange",available:true,tag:"HAUL MORE"},
+{id:"VEH-004",name:"Volt City 02",station:"river",type:"city",battery:23,range:13,rate:4,shade:"lime",available:false,tag:"CHARGING"},
+{id:"VEH-005",name:"Street Echo",station:"park",type:"city",battery:96,range:55,rate:4,shade:"white",available:true,tag:"LONG RANGE"},
+{id:"VEH-006",name:"Sprint Carbon",station:"park",type:"sport",battery:68,range:38,rate:6,shade:"orange",available:true,tag:"FAST & LIGHT"},
+{id:"VEH-007",name:"Metro Glide 02",station:"metro",type:"city",battery:78,range:44,rate:4,shade:"silver",available:true,tag:"COMMUTER"},
+{id:"VEH-008",name:"Cargo Studio",station:"east",type:"cargo",battery:82,range:58,rate:6,shade:"lime",available:true,tag:"DAY RIDER"}
+];
+const getStation=id=>stations.find(s=>s.id===id),getBike=id=>bikes.find(b=>b.id===id);
+const money=n=>"₹"+Math.round(n).toLocaleString("en-IN");
+const time=s=>String(Math.floor(s/60)).padStart(2,"0")+":"+String(Math.floor(s%60)).padStart(2,"0");
+const set=(id,v)=>{if($(id))$(id).textContent=String(v)};
+const key="veh-demo-ride-v1",historyKey="veh-demo-history-v1";
+function read(k,fallback){try{const x=localStorage.getItem(k);return x&&x.length<50000?JSON.parse(x):fallback}catch{return fallback}}
+function save(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch{return false}}
+function validRide(v){return v&&typeof v==="object"&&getBike(v.bikeId)&&["reserved","riding","paused","completed"].includes(v.phase)&&Number.isFinite(v.created)&&Number.isFinite(v.seconds)&&Number.isFinite(v.distance)&&v.created<Date.now()+60000&&v.created>Date.now()-86400000}
+let ride=validRide(read(key,null))?read(key,null):null;
+if(ride){ride.seconds=Math.min(36000,Math.max(0,ride.seconds));ride.distance=Math.min(100,Math.max(0,ride.distance));ride.battery=Math.min(100,Math.max(0,Number(ride.battery)||0));if(ride.phase==="reserved"&&Date.now()-ride.created>600000)ride=null}
+let trips=read(historyKey,[]);if(!Array.isArray(trips))trips=[];trips=trips.filter(t=>t&&getBike(t.bikeId)&&Number.isFinite(t.created)).slice(0,12);
+let focus="all",type="all",chosen="VEH-001",activeTab="explore",toastTimer;
+function toast(message){const el=$("toast");el.textContent=message;el.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>{el.hidden=true},3500)}
+function showTab(tab){activeTab=tab;const isRide=tab==="ride";$("explorePanel").hidden=isRide;$("ridePanel").hidden=!isRide;$("tabExplore").setAttribute("aria-selected",String(!isRide));$("tabRide").setAttribute("aria-selected",String(isRide));if(isRide)renderRide()}
+function selectStation(id){if(id!=="all"&&!getStation(id))return;focus=id;$("stationFilter").value=id;renderMap();renderBikes()}
+function renderMap(){
+ const pins=$("stationMarkers");pins.replaceChildren();
+ stations.forEach(s=>{
+  const p=document.createElement("button");p.type="button";p.className="station-pin"+(focus===s.id?" selected":"");
+  p.style.left=s.x+"%";p.style.top=s.y+"%";p.setAttribute("aria-pressed",String(focus===s.id));p.setAttribute("aria-label",s.name+" station, "+bikes.filter(b=>b.station===s.id&&b.available).length+" demo bicycles available");
+  p.innerHTML='<span class="pin-core">ϟ</span><span class="pin-text"></span>';
+  p.querySelector(".pin-text").textContent=s.name;p.onclick=()=>selectStation(s.id);pins.append(p);
  });
- const station=stationFor(selectedStation);
- $('stationName').textContent=station?station.name:'All demo stations';
- $('stationDetail').textContent=station?station.area+' · '+station.eta+' min fictional walk · '+station.charging+' charge points':'Select a location pin to browse its bikes';
- $('mapActiveBadge').textContent=station?station.name.toUpperCase():'ALL STATIONS';
- $('stationFilter').value=station?station.id:'all';
- $('statAvailable').textContent=BIKES.filter(b=>bikeIsAvailable(b)).length;
+ const station=ride?getStation(getBike(ride.bikeId).station):getStation(focus);
+ if(station){$("routeLine").setAttribute("points",station.route);$("routeLine").setAttribute("opacity",ride?"1":".5");$("routePulse").setAttribute("opacity",ride?"1":"0");set("stationName",station.name);set("stationDetail",station.detail);set("mapActiveBadge",station.name.toUpperCase())}
+ else{$("routeLine").setAttribute("opacity","0");$("routePulse").setAttribute("opacity","0");set("stationName","All demo stations");set("stationDetail","Select a pin to focus nearby e-bikes");set("mapActiveBadge","ALL STATIONS")}
+ if(ride){const coords=station.route.split(" ").at(-1).split(",");$("routePulse").setAttribute("cx",coords[0]);$("routePulse").setAttribute("cy",coords[1]);}
 }
-function getFilteredBikes(){
- return BIKES.filter(b=>(selectedStation==='all'||b.station===selectedStation)&&(selectedType==='all'||b.type===selectedType))
-   .sort((a,b)=>Number(b.status==='available')-Number(a.status==='available')||b.battery-a.battery);
+function createBikeCard(b){
+ const card=document.createElement("button");card.type="button";card.disabled=!b.available;card.className="bike-card"+(chosen===b.id?" selected":"")+(b.available?"":" charging");card.setAttribute("aria-pressed",String(chosen===b.id));
+ const header=document.createElement("div");header.className="bike-card-top";
+ const id=document.createElement("span");id.textContent=b.id+" / "+b.tag;
+ const state=document.createElement("span");state.className=b.available?"ready":"charge-label";state.textContent=b.available?"● READY":"ϟ CHARGING";header.append(id,state);
+ const body=document.createElement("div");body.className="bike-card-body";
+ const graphic=document.createElement("div");graphic.className="small-bike "+b.shade;graphic.innerHTML='<svg viewBox="0 0 102 65" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="4.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="21" cy="46" r="15"/><circle cx="79" cy="46" r="15"/><path d="M21 46L42 20L55 46H21M42 20H63L55 46M63 20L79 46M37 18H50M63 20L69 10L82 10"/></g></svg>';
+ const detail=document.createElement("div");detail.className="bike-detail";
+ const title=document.createElement("strong");title.textContent=b.name;
+ const sub=document.createElement("span");sub.textContent=getStation(b.station).name+" · "+b.type.toUpperCase();detail.append(title,sub);body.append(graphic,detail);
+ const foot=document.createElement("div");foot.className="bike-card-bottom";
+ const power=document.createElement("div");power.className="bike-power";const text=document.createElement("span");text.textContent="ϟ "+b.battery+"% BATTERY";
+ const line=document.createElement("span");line.className="bike-bar";const fill=document.createElement("i");fill.style.width=b.battery+"%";line.append(fill);power.append(text,line);
+ const range=document.createElement("span");range.textContent="≈ "+b.range+" KM";foot.append(power,range);
+ card.append(header,body,foot);
+ if(b.available)card.onclick=()=>{chosen=b.id;renderBikes()};
+ return card;
 }
 function renderBikes(){
- const bikes=getFilteredBikes();
- const el=$('bikeCards');
- el.replaceChildren();
- $('bikeCount').textContent=bikes.length+' SAMPLE BIKES MATCH';
- if(!bikes.length){
-  el.innerHTML='<div class="no-bikes">No sample bikes match. Choose another station or ride type.</div>';
-  return;
- }
- bikes.forEach(b=>{
-  const station=stationFor(b.station);
-  const available=bikeIsAvailable(b);
-  const btn=document.createElement('button');btn.type='button';btn.className='bike-card';
-  btn.dataset.bike=b.id;btn.dataset.selected=String(selectedBike===b.id);
-  btn.disabled=!available;
-  btn.setAttribute('aria-label',b.name+', '+b.battery+' percent battery, '+rangeKm(b)+' kilometres estimated range, '+station.name+'. '+(available?'Select this bike':'Unavailable'));
-  const status=available?rangeKm(b)+' km range':'CHARGING / BUSY';
-  btn.innerHTML='<span class="bike-small" aria-hidden="true">ϟ</span><span class="bike-info"><strong>'+b.name+'</strong><small>'+station.name+' · '+b.tag+'</small></span><span class="bike-end"><strong>'+b.battery+'% ϟ</strong><small>'+status+'</small><span class="battery-mini '+(b.battery<35?'low':'')+'"><i style="width:'+b.battery+'%"></i></span></span>';
-  el.append(btn);
- });
+ const list=bikes.filter(b=>(focus==="all"||b.station===focus)&&(type==="all"||b.type===type));
+ const available=list.filter(b=>b.available);if(!available.some(b=>b.id===chosen))chosen=available[0]?.id||null;
+ const box=$("bikeCards");box.replaceChildren(...list.map(createBikeCard));
+ if(list.length===0){const empty=document.createElement("p");empty.className="no-bikes";empty.textContent="No demo bikes match your filters. Select another station or ride type.";box.append(empty)}
+ set("bikeCount",available.length+" AVAILABLE / "+list.length+" SHOWN");
+ const b=getBike(chosen);
+ set("selectedName",b?.name||"No available bicycle");
+ set("selectedMeta",b?getStation(b.station).name+" · "+b.battery+"% battery · ≈"+b.range+" km":"Try a different filter");
+ set("selectedRate",b?money(b.rate)+"/min":"—");set("priceEstimate",b?money(b.rate*15):"—");
+ $("bookBtn").disabled=!b||Boolean(ride&&ride.phase!=="completed");
+ $("bookBtn").textContent=ride&&ride.phase!=="completed"?"FINISH CURRENT TRIP FIRST ↗":"RESERVE THIS BIKE ↗";
+ set("statAvailable",String(bikes.filter(b=>b.available).length).padStart(2,"0"));
 }
-function renderSelection(){
- const b=bikeFor(selectedBike);
- if(!b){$('bookBtn').disabled=true;return;}
- const station=stationFor(b.station);
- $('selectedName').textContent=b.name;
- $('selectedMeta').textContent=station.name+' · '+b.battery+'% · '+rangeKm(b)+' km estimate';
- $('selectedRate').textContent=money(b.rate)+'/min';
- $('priceEstimate').textContent=money(quoteFor(b,15).fare);
- $('bookBtn').disabled=!bikeIsAvailable(b)||['reserved','riding','paused'].includes(getPhase(session));
- $('bookBtn').querySelector('span').textContent=$('bookBtn').disabled?'×':'↗';
+function openDialog(){
+ const b=getBike(chosen);if(!b||!b.available)return toast("Select an available demo bicycle");
+ if(ride&&ride.phase!=="completed")return toast("Finish or cancel your current demo trip first");
+ set("dialogModel",b.name+" / "+b.id);set("dialogStation",getStation(b.station).name);
+ set("dialogPower",b.battery+"% / approx. "+b.range+" km");set("dialogFare",money(b.rate*15)+" demo estimate");
+ $("bookingDialog").showModal();
 }
-function renderHistory(){
- const box=$('historyList');
- box.replaceChildren();
- if(history.length===0){box.innerHTML='<div class="history-empty">NO RIDES YET. YOUR NEXT MOVE STARTS ABOVE. ↗</div>';return;}
- history.slice(0,10).forEach(h=>{
-  const bike=bikeFor(h.bikeId);
-  const div=document.createElement('div');div.className='history-item';
-  const title=document.createElement('div');
-  const name=document.createElement('strong');name.textContent=bike?bike.name:'Sample E-bike';
-  const meta=document.createElement('span');meta.textContent=dateLabel(h.endedAt)+' · '+h.distanceKm.toFixed(1)+' km · '+(Math.round(h.minutes)||1)+' simulated min';
-  title.append(name,meta);
-  const cost=document.createElement('b');cost.textContent=money(h.fare);
-  div.append(title,cost);box.append(div);
- });
-}
-function renderMapRoute(){
- const phase=getPhase(session);
- const valid=phase==='reserved'||phase==='riding'||phase==='paused';
- const line=$('routeLine'),cursor=$('routePulse');
- if(!valid){line.style.opacity='0';cursor.style.opacity='0';return;}
- const bike=bikeFor(session.bikeId);if(!bike)return;
- const points=routeForStation(bike.station);
- line.setAttribute('points',points.map(p=>p.join(',')).join(' '));
- line.style.opacity=phase==='reserved'?'0.4':'0.92';
- cursor.style.opacity=phase==='reserved'?'0':'1';
- if(phase!=='reserved'){
-  const stats=rideMetrics(session);
-  const point=routePoint(bike.station,stats.progress);
-  cursor.setAttribute('cx',point.x.toFixed(1));cursor.setAttribute('cy',point.y.toFixed(1));
- }
-}
-function setStep(id,state){
- const el=$(id);el.classList.toggle('done',state==='done');el.classList.toggle('active',state==='active');
-}
-function resetRideButtons(){
- ['startRide','pauseRide','endRide','cancelRide','newRide'].forEach(id=>$(id).hidden=true);
- $('holdBox').hidden=true;
+function confirm(){
+ const b=getBike(chosen);$("bookingDialog").close();if(!b||!b.available)return;
+ ride={bikeId:b.id,phase:"reserved",created:Date.now(),seconds:0,distance:0,battery:b.battery,lastTick:Date.now()};
+ save(key,ride);focus=b.station;$("stationFilter").value=focus;
+ renderMap();renderBikes();showTab("ride");$("tabRideIndicator").hidden=false;
+ toast("Demo bike held at "+getStation(focus).name);
 }
 function renderRide(){
- const phase=getPhase(session);
- const b=bikeFor(session.bikeId);
- const active=['reserved','riding','paused'].includes(phase);
- $('rideDot').hidden=!active;$('tabRideIndicator').hidden=!active;
- resetRideButtons();
- $('rideBattery').textContent=b?b.battery+'%':'—';
- $('rideRange').textContent=b?rangeKm(b)+' km':'— km';
- $('rideDistance').innerHTML='0.0 <small>km</small>';
- $('rideTime').textContent='00:00';
- $('rideFare').textContent='₹0';
- $('batteryRing').style.background='conic-gradient(#b8e467 0% '+(b?b.battery:0)+'%,#d7e0d0 '+(b?b.battery:0)+'% 100%)';
- $('rideBikeName').textContent=b?b.name:'Choose an electric bike';
- $('rideBikeCode').textContent=b?b.id:'NO ACTIVE TRIP';
- ['stepReserve','stepNavigate','stepRide','stepReturn'].forEach(id=>setStep(id,''));
- if(phase==='idle'||phase==='expired'){
-  $('ridePhaseBadge').textContent='STANDBY';
-  $('rideTitle').innerHTML='YOUR<br><em>JOURNEY.</em>';
-  $('rideDescription').textContent='Reserve an e-bike from the live demo fleet selector to begin.';
-  $('newRide').hidden=false;
- }else if(phase==='reserved'){
-  const station=stationFor(b.station);
-  $('ridePhaseBadge').textContent='RESERVED / DEMO';
-  $('rideTitle').innerHTML='EN ROUTE<br><em>TO YOUR BIKE.</em>';
-  $('rideDescription').textContent='Head to '+station.name+' ('+station.area+'). Estimated demo walking time: '+station.eta+' min. No real navigation or location sharing.';
-  $('holdBox').hidden=false;
-  $('holdCountdown').textContent=timeLabel(Math.max(0,session.holdEndsAt-Date.now()));
-  $('startRide').hidden=false;$('cancelRide').hidden=false;
-  setStep('stepReserve','done');setStep('stepNavigate','active');
- }else if(phase==='riding'||phase==='paused'){
-  const m=rideMetrics(session);
-  $('ridePhaseBadge').textContent=phase==='paused'?'SIMULATION PAUSED':'RIDE IN MOTION / DEMO';
-  $('rideTitle').innerHTML=phase==='paused'?'TAKE YOUR<br><em>TIME.</em>':'STAY IN<br><em>MOTION.</em>';
-  $('rideDescription').textContent='Your route visualization advances at '+TIME_MULTIPLIER+'× demo speed. GPS, power and pricing are entirely simulated.';
-  $('rideBattery').textContent=m.battery+'%';
-  $('rideRange').textContent=m.rangeKm.toFixed(1)+' km';
-  $('rideDistance').innerHTML=m.distanceKm.toFixed(1)+' <small>km</small>';
-  $('rideTime').textContent=timeLabel(m.simulatedMs);
-  $('rideFare').textContent=money(m.fare);
-  $('batteryRing').style.background='conic-gradient(#b8e467 0% '+m.battery+'%,#d7e0d0 '+m.battery+'% 100%)';
-  $('pauseRide').hidden=false;
-  $('pauseRide').textContent=phase==='paused'?'RESUME RIDE SIMULATION':'PAUSE RIDE SIMULATION';
-  $('endRide').hidden=false;
-  setStep('stepReserve','done');setStep('stepNavigate','done');setStep('stepRide','active');
- }else if(phase==='completed'){
-  const summary=session.summary;
-  $('ridePhaseBadge').textContent='TRIP COMPLETE';
-  $('rideTitle').innerHTML='NICE<br><em>MOVE.</em>';
-  $('rideDescription').textContent='Your demonstration ride has ended. A summary has been saved in this browser only. No fare was charged.';
-  if(summary){
-   $('rideBattery').textContent=summary.batteryEnd+'%';
-   $('rideDistance').innerHTML=Number(summary.distanceKm||0).toFixed(1)+' <small>km</small>';
-   $('rideTime').textContent=timeLabel(Math.max(1,summary.minutes)*60000);
-   $('rideFare').textContent=money(summary.fare);
-   $('rideRange').textContent=rangeKm(b,summary.batteryEnd)+' km';
-   $('batteryRing').style.background='conic-gradient(#b8e467 0% '+summary.batteryEnd+'%,#d7e0d0 '+summary.batteryEnd+'% 100%)';
-  }
-  $('newRide').hidden=false;
-  ['stepReserve','stepNavigate','stepRide','stepReturn'].forEach(id=>setStep(id,'done'));
- }
- renderMapRoute();
+ const b=ride?getBike(ride.bikeId):null;const phase=ride?.phase||"standby";
+ const names={standby:"STANDBY",reserved:"RESERVED",riding:"RIDE IN PROGRESS",paused:"PAUSED",completed:"RETURNED"};
+ const messages={standby:"Reserve a demo e-bike to activate your route and ride console.",reserved:"EN ROUTE: Follow the dashed fictional path to "+(b?getStation(b.station).name:"your bike")+". This is not live turn-by-turn navigation.",riding:"Ride simulation running at 5× demo speed. Battery, distance and location are modelled, not measured.",paused:"Simulation paused. Resume when you're ready.",completed:"Ride completed. Your fictional journey is saved locally."};
+ set("ridePhaseBadge",names[phase]);set("rideTitle",phase==="completed"?"RIDE COMPLETE":phase==="standby"?"YOUR JOURNEY":"KEEP MOVING");
+ set("rideDescription",messages[phase]);set("rideBikeName",b?.name||"—");
+ set("rideBikeCode",b?b.id+" / "+getStation(b.station).name:"NO ACTIVE TRIP");
+ const pct=ride?ride.battery:0;
+ set("rideBattery",ride?Math.round(pct)+"%":"—");$("batteryRing").style.setProperty("--battery",pct+"%");
+ set("rideRange",ride?(b.range*pct/b.battery).toFixed(1)+" km":"— km");
+ set("rideDistance",ride?ride.distance.toFixed(2)+" km":"0.00 km");
+ set("rideTime",time(ride?.seconds||0));set("rideFare",b?money(Math.ceil(ride.seconds/60)*b.rate):"₹0");
+ $("holdBox").hidden=phase!=="reserved";
+ if(phase==="reserved")set("holdCountdown",time(Math.max(0,Math.ceil((ride.created+600000-Date.now())/1000))));
+ $("startRide").hidden=phase!=="reserved";$("pauseRide").hidden=!["riding","paused"].includes(phase);
+ set("pauseRide",phase==="paused"?"RESUME DEMO RIDE":"PAUSE SIMULATION");
+ $("endRide").hidden=!["riding","paused"].includes(phase);
+ $("cancelRide").hidden=phase!=="reserved";$("newRide").hidden=phase!=="completed";
+ $("tabRideIndicator").hidden=!ride||phase==="completed";
+ const progress={standby:0,reserved:2,riding:3,paused:3,completed:4}[phase];
+ ["stepReserve","stepNavigate","stepRide","stepReturn"].forEach((id,i)=>{$(id).classList.toggle("step-done",i<progress);$(id).classList.toggle("step-active",i===progress-1&&progress<4)});
 }
-function renderAll(){
- renderStations();renderBikes();renderSelection();renderRide();renderHistory();
+function start(){if(!ride||ride.phase!=="reserved")return; if(Date.now()-ride.created>=600000){cancel();return}
+ ride.phase="riding";ride.lastTick=Date.now();save(key,ride);renderRide();toast("Ride simulation started — no physical bike unlocked")}
+function pause(){if(!ride||!["riding","paused"].includes(ride.phase))return;ride.phase=ride.phase==="riding"?"paused":"riding";ride.lastTick=Date.now();save(key,ride);renderRide()}
+function finish(){
+ if(!ride||!["riding","paused"].includes(ride.phase))return;
+ ride.phase="completed";const b=getBike(ride.bikeId);
+ trips.unshift({bikeId:b.id,created:ride.created,ended:Date.now(),seconds:ride.seconds,distance:ride.distance,fare:Math.ceil(ride.seconds/60)*b.rate});trips=trips.slice(0,12);
+ save(historyKey,trips);save(key,ride);renderBikes();renderMap();renderRide();renderHistory();
+ toast("Sample trip complete. No money was charged.");
 }
-function selectStation(id){
- selectedStation=stationFor(id)?id:'all';
- const bikes=getFilteredBikes().filter(b=>bikeIsAvailable(b));
- if(bikes.length)selectedBike=bikes[0].id;
- renderAll();persist();
-}
-function selectBike(id){
- const b=bikeFor(id);if(!b||!bikeIsAvailable(b))return;
- selectedBike=id;renderBikes();renderSelection();persist();
-}
-function openBooking(){
- const b=bikeFor(selectedBike);
- if(!b||!bikeIsAvailable(b)){showToast('Select an available demonstration e-bike first.');return;}
- if(['reserved','riding','paused'].includes(getPhase(session))){showToast('Please finish your current demo ride first.');setTab('ride');return;}
- const s=stationFor(b.station);
- $('dialogModel').textContent=b.name+' · '+b.id;
- $('dialogStation').textContent=s.name+' / '+s.area;
- $('dialogPower').textContent=b.battery+'% / '+rangeKm(b)+' km modelled range';
- $('dialogFare').textContent=money(quoteFor(b,15).fare);
- $('dialogBike').textContent='Your bike is waiting at '+s.name+'. This is a simulated hold for '+Math.round(HOLD_MS/60000)+' minutes.';
- $('bookingDialog').showModal();
-}
-function closeBooking(){if($('bookingDialog').open)$('bookingDialog').close();}
-function confirmBooking(){
- const b=bikeFor(selectedBike);if(!b)return;
- try{
-  session=reserveBike(session,b.id);
-  closeBooking();
-  renderAll();setTab('ride');persist();
-  focusNetwork('ride');
-  showToast('Demo bike reserved. See your en-route stage and simulate unlock when ready.');
- }catch(e){closeBooking();showToast(e.message);}
-}
-function begin(){
- try{
-  session=startRide(session);
-  renderAll();persist();
-  showToast('Demo unlocked. Route motion and estimated battery now update at 20× simulation speed.');
- }catch(e){showToast(e.message);}
-}
-function togglePause(){
- try{
-  session=getPhase(session)==='paused'?resumeRide(session):pauseRide(session);
-  renderAll();persist();
- }catch(e){showToast(e.message);}
-}
-function end(){
- try{
-  session=completeRide(session);
-  history.unshift(session.summary);
-  history=history.slice(0,12);
-  renderAll();persist();
-  showToast('Trip ended and saved locally. No payment was charged.');
- }catch(e){showToast(e.message);}
-}
-function cancel(){
- if(getPhase(session)!=='reserved')return;
- session={phase:'idle'};renderAll();setTab('explore');persist();showToast('Demonstration hold cancelled.');
-}
-function freshRide(){
- if(['reserved','riding','paused'].includes(getPhase(session)))return;
- session={phase:'idle'};renderAll();setTab('explore');focusNetwork('explore');persist();
+function cancel(){if(!ride||ride.phase!=="reserved")return;ride=null;save(key,null);renderMap();renderBikes();renderRide();showTab("explore");toast("Demo booking cancelled")}
+function reset(){if(!ride||ride.phase!=="completed")return;ride=null;save(key,null);renderMap();renderBikes();renderRide();showTab("explore");$("network").scrollIntoView({behavior:"smooth"})}
+function renderHistory(){
+ const box=$("historyList");box.replaceChildren();
+ if(!trips.length){const p=document.createElement("div");p.className="history-empty";p.textContent="NO RIDES YET. YOUR NEXT MOVE STARTS ABOVE. ↗";box.append(p);return}
+ trips.forEach(t=>{
+  const item=document.createElement("div");item.className="history-row";
+  const left=document.createElement("div"),right=document.createElement("div");
+  const date=document.createElement("span");date.textContent=new Date(t.ended||t.created).toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})+" · DEMO TRIP";
+  const name=document.createElement("strong");name.textContent=getBike(t.bikeId).name;left.append(date,name);
+  const distance=document.createElement("strong");distance.textContent=Number(t.distance).toFixed(2)+" km";
+  const cost=document.createElement("small");cost.textContent=money(Number(t.fare)||0)+" DEMO · "+time(Number(t.seconds)||0);
+  right.append(distance,cost);item.append(left,right);box.append(item);
+ });
 }
 function tick(){
- const local=new Date();
- $('consoleClock').textContent=local.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
- if(getPhase(session)==='expired'){
-  session={phase:'idle'};renderAll();setTab('explore');persist();
-  showToast('Your ten-minute demo reservation expired. Choose a bike to start again.');
-  return;
- }
- if(currentTab==='ride')renderRide();
+ set("consoleClock",new Date().toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit",hour12:false}));
+ if(!ride)return;
+ if(ride.phase==="reserved"){if(Date.now()-ride.created>=600000){ride=null;save(key,null);renderRide();renderBikes();renderMap();toast("Demo reservation expired")}else if(activeTab==="ride")renderRide();return}
+ if(ride.phase!=="riding")return;
+ const now=Date.now(),delta=Math.min(5,Math.max(0,(now-(ride.lastTick||now))/1000));ride.lastTick=now;
+ const elapsed=delta*5,km=15*elapsed/3600,b=getBike(ride.bikeId);
+ ride.seconds+=elapsed;ride.distance+=km;ride.battery=Math.max(0,ride.battery-km*b.battery/b.range);
+ if(ride.battery<=0||ride.seconds>=7200){finish();return}
+ save(key,ride);if(activeTab==="ride")renderRide();
+ const points=getStation(b.station).route.split(" ").map(s=>s.split(",").map(Number));
+ const p=(ride.distance%3.2)/3.2*(points.length-1),idx=Math.min(points.length-2,Math.floor(p)),frac=p-idx;
+ $("routePulse").setAttribute("cx",points[idx][0]*(1-frac)+points[idx+1][0]*frac);
+ $("routePulse").setAttribute("cy",points[idx][1]*(1-frac)+points[idx+1][1]*frac);
 }
-$('stationMarkers').addEventListener('click',e=>{
- const btn=e.target.closest('button[data-station]');if(btn)selectStation(btn.dataset.station);
-});
-$('bikeCards').addEventListener('click',e=>{
- const btn=e.target.closest('button[data-bike]');if(btn)selectBike(btn.dataset.bike);
-});
-$('stationFilter').addEventListener('change',e=>selectStation(e.target.value));
-$('typeFilter').addEventListener('change',e=>{
- selectedType=e.target.value;
- if(!['all','city','cargo','sport'].includes(selectedType))selectedType='all';
- const first=getFilteredBikes().find(b=>bikeIsAvailable(b));
- if(first)selectedBike=first.id;
- renderBikes();renderSelection();
-});
-$('showAll').addEventListener('click',()=>selectStation('all'));
-$('bookBtn').addEventListener('click',openBooking);
-$('dialogClose').addEventListener('click',closeBooking);
-$('dialogCancel').addEventListener('click',closeBooking);
-$('confirmBooking').addEventListener('click',confirmBooking);
-$('bookingDialog').addEventListener('click',e=>{
- if(e.target===$('bookingDialog'))closeBooking();
-});
-$('tabExplore').addEventListener('click',()=>setTab('explore'));
-$('tabRide').addEventListener('click',()=>setTab('ride'));
-$all('.console-tabs button').forEach(btn=>btn.addEventListener('keydown',e=>{
- if(e.key!=='ArrowLeft'&&e.key!=='ArrowRight')return;
- e.preventDefault();const id=btn.id==='tabExplore'?'tabRide':'tabExplore';
- $(id).focus();setTab(id==='tabRide'?'ride':'explore');
-}));
-$('navRide').addEventListener('click',()=>focusNetwork('ride'));
-$('heroDemo').addEventListener('click',()=>{$('journey').scrollIntoView({behavior:'smooth'});});
-$('startRide').addEventListener('click',begin);
-$('pauseRide').addEventListener('click',togglePause);
-$('endRide').addEventListener('click',end);
-$('cancelRide').addEventListener('click',cancel);
-$('newRide').addEventListener('click',freshRide);
-window.addEventListener('storage',e=>{if(e.key!==KEY)return;loadState();renderAll();setTab(currentTab);});
-loadState();
-renderAll();
-setTab(currentTab);
-tick();
-setInterval(tick,1000);
+$("stationFilter").addEventListener("change",e=>selectStation(e.target.value));
+$("typeFilter").addEventListener("change",e=>{type=e.target.value;renderBikes()});
+$("showAll").onclick=()=>selectStation("all");
+$("tabExplore").onclick=()=>showTab("explore");$("tabRide").onclick=()=>showTab("ride");
+$("navRide").onclick=()=>{$("network").scrollIntoView({behavior:"smooth"});showTab("ride")};
+$("heroDemo").onclick=()=>$("journey").scrollIntoView({behavior:"smooth"});
+$("bookBtn").onclick=openDialog;$("dialogClose").onclick=()=>$("bookingDialog").close();
+$("dialogCancel").onclick=()=>$("bookingDialog").close();$("confirmBooking").onclick=confirm;
+$("startRide").onclick=start;$("pauseRide").onclick=pause;$("endRide").onclick=finish;
+$("cancelRide").onclick=cancel;$("newRide").onclick=reset;
+$("bookingDialog").onclick=e=>{if(e.target===$("bookingDialog"))$("bookingDialog").close()};
+if(ride&&ride.phase==="riding")ride.lastTick=Date.now();
+renderMap();renderBikes();renderHistory();renderRide();if(ride&&ride.phase!=="completed")showTab("ride");tick();setInterval(tick,1000);
