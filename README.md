@@ -1,27 +1,55 @@
-> **Live local-first app:** [TestVeh Registry](https://hulax-testveh-registry.vercel.app) · Vercel production deployment is READY. User-entered records stay in this browser, not a shared database.
+# TestVeh — Vehicle Identity Studio
 
-# TestVeh · Vehicle Registry Studio
+**Live:** https://vehical.hulax.uk/  
+**Deployment:** Vercel project `test-veh-y5ak`, Cloudflare DNS for `vehical.hulax.uk`.
 
-A **working standalone vehicle-records and registration-review prototype** built from the original Django/React authentication experiment. The new app runs from `site/`; it does not depend on a local Django server or unreviewed signup endpoints. Existing legacy code in the upstream repository can be preserved for reference.
+> **Important:** TestVeh is a local-first vehicle dossier and registration-review **prototype**, not a government service or a verified vehicle identity registry. Do not enter real keeper identities, legal documents, passwords or other sensitive personal data.
 
-## Functional application
+## The idea
 
-Create, validate, edit and delete vehicle records; search by registration number, model, keeper alias or region; filter fuel/type/review status; track sample document checks and inspection dates; inspect individual dossiers; export CSV and retain changes across reloads in the browser. It comes with four **fictional demonstration records**. Form fields and exported data are validated/escaped; model tests are included.
+**Every vehicle has a story.** TestVeh presents a vehicle as an understandable, inspectable *dossier*: registration reference, maker and model, fuel type, keeper alias, region, inspection schedule, document-check completeness and desk-review state.
 
-**Not a government registration system:** Nothing is submitted to official authorities. The `Reviewed (demo)` state is a local-only simulation, not a legal inspection, ownership check or registration certificate. Enter fictional data, not actual personal identities, registration documents or credentials.
+The interface is deliberately unlike a generic fleet dashboard or vehicle marketplace. It pairs a cinematic engineering schematic with an editorial specimen file, then lets the visitor explore real working local records.
 
-## Run
+## Working features
 
-Run `python -m http.server 4173 --directory site` then open http://localhost:4173.
+- Create, edit and delete vehicle records with validation and duplicate registration checks
+- Local-only browser persistence; sample records are fictional and identifiable as demonstrations
+- Vehicle dossier preview: switch between three example files and open each full record
+- Search/filter by plate, model, keeper label or region; review status, fuel and vehicle class
+- Track three self-recorded document checks, inspection dates and review notes
+- Export browser-stored records to CSV; no server upload or verification
+- Responsive interface and keyboard-operable dialogs
 
-With Node.js 20+, run `node --test tests/registry.test.mjs`.
+The core registry model is in `site/registry.mjs`; the local workspace logic is in `site/app.js`. The underlying older Django/React authentication prototype remains preserved in `backend/` and `frontend/` as an exploratory legacy path.
 
-## Vercel
+The separate `platform/` folder contains an **unfinished** vehicle-rental, parking and EV-charging marketplace experiment. It is *not* the product currently served on `vehical.hulax.uk` and does not have a confirmed live database, customer payments or real inventory.
 
-`vercel.json` configures static publishing of `site/`. Connect `HuLaxx/TestVeh` to Vercel, use branch `master`, and deploy as a static site. The Vercel project was deployed directly from source and reports READY; GitHub auto-deploy linking is not yet configured.
+## Run and check locally
 
-## Production path
+This is a static web app with JavaScript modules:
 
-This demonstrator is not a secure multi-user registry. Production would require authenticated roles, server-side data integrity and audit trails, an authorized backing database, explicit data protection rules, authentication hardening and independent tests. The original Django settings should also be hardened and tracked virtual environment files removed in a separate cleanup.
+```sh
+python -m http.server 4173 --directory site
+# visit http://localhost:4173
+node --test tests/registry.test.mjs
+```
 
-Built by Rahul Khanke / HuLaX.
+The deployment uses the root `vercel.json` pointing to `site/`, with no build system or secrets.
+
+## Design / release evidence
+
+- Bespoke dark pine and acid-chartreuse identity language with cream dossier paper, technical vehicle illustration, oversized editorial type, custom graphic details and a controlled scanning animation.
+- Respect for `prefers-reduced-motion`, explicit accessible button names, visible keyboard focus styles and horizontal scrolling confined to the register table.
+- On 2026-11-08, Vercel reported production deployment `dpl_HQWxsJSdcuwynUwqf3yBRyStPnhZ` **READY** for commit `227c9e8`; live HTTPS returned HTTP 200.
+- Browser-tested: switch sample dossier, open/close a full vehicle record, search by registration number, add a fictional record, edit it and delete it.
+- Browser mobile inspection at 320px and 390px found no document-wide horizontal scrolling. Full regression, performance, security and accessibility audits remain future work.
+- GitHub Actions are not currently reliably running; don't infer green CI from the deployment's READY state.
+
+See `docs/VEHICLE_IDENTITY_DESIGN.md` for the visual system and interaction principles.
+
+## Next production milestones
+
+Before real vehicle identity or operator workflows, implement server-backed authentication, permissioned access, auditability, secure document storage and verification, appropriate consent/privacy policies, access controls and genuine source-of-truth integrations. The current UI intentionally **does not** imply government registration or independently validated ownership.
+
+Built by HuLaX Engineering Lab.
